@@ -93,6 +93,28 @@ int main(int argc, char* argv[])
 				generatePlane(stof(arg2),stoi(arg3),arg4);
 				cout << "Plane generated\n";
 			}
+			else if (arg1 == "box")
+			{
+				generateBox(stof(arg2),stoi(arg3),arg4);
+				cout << "Box generated\n";
+			}
+			else if (arg1 == "cone")
+			{
+				cout << "Cone generated\n";
+			}
+			else if (arg1 == "sphere")
+			{
+				cout << "Sphere generated\n";
+			}
+			else
+			{
+				cout << "Invalid object\n";
+			}
+			
+		}
+		else if(command == "quit")
+		{
+			break;
 		}
 		else
 		{
