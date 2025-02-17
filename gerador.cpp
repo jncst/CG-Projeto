@@ -2,6 +2,9 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <sstream>
+
+using namespace std;
 
 void generatePlane(float length, int divisions, const string& filename)
 {
@@ -15,7 +18,7 @@ void generatePlane(float length, int divisions, const string& filename)
 	float subdiv = length / divisions;
 	float half = length / 2;		//usado para depois podermos centrar na origem
 
-	file << (divisions + 1) ^ 2 << "\n";		//n�mero de v�rtices no plano
+	file << (divisions + 1) * (divisions + 1) << "\n";		//número de vértices no plano
 
 	int i, j;
 	float x, z;
@@ -27,7 +30,7 @@ void generatePlane(float length, int divisions, const string& filename)
 			x = half - j * subdiv;
 			z = half - i * subdiv;		//começa do ponto (half,0,half)
 
-			file << x << " 0 " << z "\n";		//escreve de cada ponto por linha x y z
+			file << x << " 0 " << z << "\n";		//escreve de cada ponto por linha x y z
 		}
 	}
 
@@ -43,10 +46,10 @@ void generateBox(float dimension, int divisions, const string& filename)
 		return;
 	}
 
-	float subdiv = length / divisions;
+	float subdiv = dimension / divisions;
 	float half = dimension / 2;		//usado para depois podermos centrar na origem
 
-	file << (divisions + 1) ^ 3 << "\n";		//n�mero de vértices da box
+	file << (divisions + 1) * 3 << "\n";		//n�mero de vértices da box
 
 	int i, j, k;
 	float x, y, z;
@@ -72,10 +75,29 @@ void generateBox(float dimension, int divisions, const string& filename)
 
 int main(int argc, char* argv[])
 {
-	string type = argv[1];
+	string line, command, arg1, arg2, arg3, arg4;
 
-	if (type == "plane" && argc == 5)
+	
+
+	while (true)
 	{
-		//TODO
+		getline(cin, line);
+		stringstream ss(line);
+	
+		ss >> command >> arg1 >> arg2 >> arg3 >> arg4;
+
+		if (command == "generator")
+		{
+			if(arg1 == "plane")
+			{
+				generatePlane(stof(arg2),stoi(arg3),arg4);
+				cout << "Plane generated\n";
+			}
+		}
+		else
+		{
+			cout << "Invalid command\n";
+		}
 	}
+
 }
