@@ -53,56 +53,56 @@ void renderScene(void) {
 	glBegin(GL_LINES);
 	// X axis in red
 	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(-5.0f, 0.0f, 0.0f);
-	glVertex3f( 5.0f, 0.0f, 0.0f);
+	glVertex3f(-100.0f, 0.0f, 0.0f);
+	glVertex3f( 100.0f, 0.0f, 0.0f);
 	// Y Axis in Green
 	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, -5.0f, 0.0f);
-	glVertex3f(0.0f, 5.0f, 0.0f);
+	glVertex3f(0.0f, -100.0f, 0.0f);
+	glVertex3f(0.0f, 100.0f, 0.0f);
 	// Z Axis in Blue
 	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, -5.0f);
-	glVertex3f(0.0f, 0.0f, 5.0f);
+	glVertex3f(0.0f, 0.0f, -100.0f);
+	glVertex3f(0.0f, 0.0f, 100.0f);
 
 	glEnd();
 
 
-	glBegin(GL_QUADS);
+	glBegin(GL_LINES);
 
 	glColor3f(1.0f,1.0f, 1.0f);
 
 	glVertex3f(1.0f, 0.0f, 1.0f);
-	glVertex3f( 0.333333f, 0.0f, 1.0f);
-	glVertex3f(-0.333333f, 0.0f, 1.0f);
-	glVertex3f(-1.0f, 0.0f, 1.0f);
+	glVertex3f(-1.0, 0.0f, 1.0f);
 
-	glEnd();
+	glVertex3f(-1.0f, 0.0f, -1.0f);
+	glVertex3f(-1.0, 0.0f, 1.0f);
 
-	glBegin(GL_QUADS);
-	glVertex3f(1.0f, 0.0f, 0.333333f);
-	glVertex3f(0.333333f, 0.0f ,0.333333f);
-	glVertex3f(-0.333333f, 0.0f, 0.333333f);
-	glVertex3f(-1.0f, 0.0f, 0.333333f);
-
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glVertex3f(1.0f, 0.0f, -0.333333f);
-	glVertex3f(0.333333f, 0.0f, -0.333333f);
-	glVertex3f(-0.333333f, 0.0f, -0.333333f);
-	glVertex3f(-1.0f, 0.0f, -0.333333f);
-
-	glEnd();
-
-	glBegin(GL_QUADS);
+	glVertex3f(-1.0f, 0.0f, -1.0f);
+	glVertex3f(1.0, 0.0f, -1.0f);
 
 	glVertex3f(1.0f, 0.0f, -1.0f);
-	glVertex3f(0.333333f ,0.0f, -1.0f);
-	glVertex3f(-0.333333f ,0.0f, -1.0f);
-	glVertex3f(-1.0f, 0.0f ,-1.0f);
+	glVertex3f(1.0, 0.0f, 1.0f);
+
+	glVertex3f(-1.0f, 0.0f, 0.333333f);
+	glVertex3f(1.0, 0.0f, 0.333333f);
+
+	glVertex3f(-1.0f, 0.0f, -0.333333f);
+	glVertex3f(1.0, 0.0f, -0.333333f);
+
+	glVertex3f(0.333333f, 0.0f, -1.0f);
+	glVertex3f(0.333333f, 0.0f, 1.0f);
+
+	glVertex3f(-0.333333f, 0.0f, -1.0f);
+	glVertex3f(-0.333333f, 0.0f, 1.0f);
 	
-	
+
+
 	glEnd();
+	
+	
+
+	
+
 
 	// End of frame
 	glutSwapBuffers();
