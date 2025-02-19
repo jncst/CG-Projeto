@@ -64,7 +64,7 @@ void generateBox(float dimension, int divisions, const string& filename)
 				y = half - j * subdiv;
 				z = half - i * subdiv;		//começa do ponto (half,half,half)
 
-				file << x << y << z << "\n";
+				file << x << " " << y << " " << z << "\n";
 			}
 		}
 	}
@@ -72,6 +72,39 @@ void generateBox(float dimension, int divisions, const string& filename)
 	file.close();
 }
 
+void generateSphere(float radius, int slices, int stacks, const string& filename)
+{
+	ofstream file(filename);		//abre o ficheiro para escrita
+	if (!file)
+	{
+		cerr << "Erro ao abrir o ficheiro.\n";
+		return;
+	}
+
+	file << (slices + 1) * (stacks + 1) << "\n";
+
+	int i, j;
+	float alpha, beta;
+	float x, y, z;
+
+	for (i = 0; i <= stacks; i++)
+	{
+		beta = (M_PI * i / stacks) + (M_PI / 2);
+
+		for (j = 0; j <= slices; j++)
+		{
+			alpha = 2 * M_PI * j / slices;
+
+			x = radius * cos(beta) * sin(alpha);		//conversão para coordenadas polares
+			y = radius * sin(beta);
+			z = radius * cos(beta) * cos(alpha);
+
+			file << x << " " << y << " " << z << "\n";
+		}
+	}
+
+	file.close();
+}
 
 int main(int argc, char* argv[])
 {
@@ -104,6 +137,7 @@ int main(int argc, char* argv[])
 			}
 			else if (arg1 == "sphere")
 			{
+				//generateSphere(stof(arg2), stoi(arg3), arg4, arg5);
 				cout << "Sphere generated\n";
 			}
 			else
