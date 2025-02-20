@@ -50,5 +50,8 @@
         "variant": "cpp",
         "vector": "cpp",
         "algorithm": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "tinyxml"
+    ]
 }

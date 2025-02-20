@@ -3,12 +3,13 @@
 #include <cmath>
 #include <vector>
 #include <sstream>
+#include "parserXML.h"
 
 using namespace std;
 
 void generatePlane(float length, int divisions, const string& filename)
 {
-	ofstream file(filename);		//abre o ficheiro para escrita
+	ofstream file("../generatorResults/" + filename);		//abre o ficheiro para escrita
 	if (!file)
 	{
 		cerr << "Erro ao abrir o ficheiro.\n";
@@ -39,7 +40,7 @@ void generatePlane(float length, int divisions, const string& filename)
 
 void generateBox(float dimension, int divisions, const string& filename)
 {
-	ofstream file(filename);		//abre o ficheiro para escrita
+	ofstream file("../generatorResults/" + filename);		//abre o ficheiro para escrita
 	if (!file)
 	{
 		cerr << "Erro ao abrir o ficheiro.\n";
@@ -74,7 +75,7 @@ void generateBox(float dimension, int divisions, const string& filename)
 
 void generateSphere(float radius, int slices, int stacks, const string& filename)
 {
-	ofstream file(filename);		//abre o ficheiro para escrita
+	ofstream file("../generatorResults/" + filename);		//abre o ficheiro para escrita
 	if (!file)
 	{
 		cerr << "Erro ao abrir o ficheiro.\n";
@@ -149,6 +150,25 @@ int main(int argc, char* argv[])
 		else if(command == "quit")
 		{
 			break;
+		}
+		else if(command == "test")
+		{
+		    // Parse the XML file
+			parseXML("../test files/test_files_phase_1/test_1_5.xml");
+
+			// Print parsed data
+			std::cout << "Window: " << width << "x" << height << std::endl;
+			std::cout << "Camera Position: (" << camX << ", " << camY << ", " << camZ << ")\n";
+			std::cout << "LookAt: (" << lookAtX << ", " << lookAtY << ", " << lookAtZ << ")\n";
+			std::cout << "Up Vector: (" << upX << ", " << upY << ", " << upZ << ")\n";
+			std::cout << "Projection: FOV=" << fov << ", Near=" << near << ", Far=" << far << "\n";
+		
+			std::cout << "Models:" << std::endl;
+			for (const std::string& model : models) 
+			{
+				std::cout << " - " << model << std::endl;
+			}
+			
 		}
 		else
 		{
