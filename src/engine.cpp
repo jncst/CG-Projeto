@@ -112,15 +112,19 @@ void renderPlane(float length, int divisions, std::string filePath)
 
 	for(int j = 0; j < divisions * divisions; j++)
 	{
+		std::cout << " " << divisions*divisions << std::endl;
 	
 		glColor3f(1.0f, 1.0f, 1.0f);
 		glBegin(GL_TRIANGLES);
 
-		
+		int plus = divisions + 1;
 
 		glVertex3d(points[i][0], points[i][1], points[i][2]);
+		//std::cout << points[i][0] << " " << points[i][1] << " " << points[i][2] << std::endl;
 		glVertex3d(points[i+1][0], points[i+1][1], points[i+1][2]);
-		glVertex3d(points[i+4][0], points[i+4][1], points[i+4][2]);
+		//std::cout << points[i+1][0] << " " << points[i+1][1] << " " << points[i+1][2] << std::endl;
+		glVertex3d(points[i+plus][0], points[i+plus][1], points[i+plus][2]);
+		//std::cout << points[i+plus][0] << " " << points[i+plus][1] << " " << points[i+plus][2] << std::endl;
 		
 
 
@@ -130,9 +134,14 @@ void renderPlane(float length, int divisions, std::string filePath)
 		glBegin(GL_TRIANGLES);
 
 		glVertex3d(points[i+1][0], points[i+1][1], points[i+1][2]);
-		glVertex3d(points[i+4][0], points[i+4][1], points[i+4][2]);
-		glVertex3d(points[i+5][0], points[i+5][1], points[i+5][2]);
+		//std::cout << points[i+1][0] << " " << points[i+1][1] << " " << points[i+1][2] << std::endl;
+		glVertex3d(points[i+plus][0], points[i+plus][1], points[i+plus][2]);
+		//std::cout << points[i+plus][0] << " " << points[i+plus][1] << " " << points[i+plus][2] << std::endl;
+		glVertex3d(points[i+plus+1][0], points[i+plus+1][1], points[i+plus+1][2]);
+		//std::cout << points[i+plus+1][0] << " " << points[i+plus+1][1] << " " << points[i+plus+1][2] << std::endl;
 		
+		//std::cout << " " << i << std::endl;
+
 		i++;
 		if ((j+1) % divisions == 0)
 			i = (i+1);
