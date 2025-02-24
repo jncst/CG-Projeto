@@ -25,89 +25,52 @@ float moveZ = 0.0f;
 std::vector<std::vector<float> > points;
 
 
-std::vector<std::vector<float> > parsePointsFromFile(const std::string& filename) 
+std::vector<std::vector<float> > parsePointsFromFile(const std::string& filename, float& length, int& divisions) 
 {
     std::ifstream file(filename);
-	
-	std::vector<std::vector<float> > points;  
+    std::vector<std::vector<float> > points;
 
-    if (!file.is_open()) 
-	{  // Verifica se o arquivo foi aberto com sucesso
+    if (!file.is_open()) {
         std::cerr << "Erro ao abrir o arquivo!" << std::endl;
         return points;
     }
 
     int numPoints;
-    file >> numPoints;  // Lê o número de pontos
+    file >> numPoints; // Lê o número de pontos
+    file >> length;    // Lê o valor de length
+    file >> divisions; // Lê o valor de divisions
 
-    // Para limpar o caractere de nova linha (\n) que ficou após a leitura do número de pontos
     file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // Lê os pontos e os armazena na lista de listas
     for (int i = 0; i < numPoints; ++i) 
 	{
         std::string line;
-        std::getline(file, line);  
-        std::stringstream ss(line);  
+        std::getline(file, line);
+        std::stringstream ss(line);
 
         float x, y, z;
-        ss >> x >> y >> z;  // Lê os valores de x, y, z
+        ss >> x >> y >> z;
 
-		std::vector<float> point;  // Cria o vetor de ponto
+        std::vector<float> point;
 		point.push_back(x);
 		point.push_back(y);
 		point.push_back(z);
+		points.push_back(point);
 
-        points.push_back(point);
-		
     }
 
-    file.close();  
-
-	return points;
-
+    file.close();
+    return points;
 }
 
-std::pair<float, int> extractLengthAndDivisions(const std::string& filename) {
-    std::string prefix = "plane_";
-    std::string suffix = ".3d";
 
-    // Verifica se o filename começa com "plane_" e termina com ".3d"
-    if (filename.find(prefix) != 0 || filename.rfind(suffix) != filename.length() - suffix.length()) {
-        std::cerr << "Formato inválido: " << filename << std::endl;
-        return std::make_pair(0.0f, 0); // Retorna valores padrão em caso de erro
-    }
-
-    // Remove "plane_" do início e ".3d" do final
-    std::string core = filename.substr(prefix.length(), filename.length() - prefix.length() - suffix.length());
-
-    // Encontra o underscore que separa length e divisions
-    size_t underscorePos = core.find('_');
-    if (underscorePos == std::string::npos) {
-        std::cerr << "Formato inválido: " << filename << std::endl;
-        return std::make_pair(0.0f, 0);
-    }
-
-    // Extrai as substrings de length e divisions
-    std::string lengthStr = core.substr(0, underscorePos);
-    std::string divisionsStr = core.substr(underscorePos + 1);
-
-    // Converte para float e int
-    float length;
-    int divisions;
-    std::stringstream ssLength(lengthStr), ssDivisions(divisionsStr);
-
-    if (!(ssLength >> length) || !(ssDivisions >> divisions)) {
-        std::cerr << "Erro ao converter valores: " << filename << std::endl;
-        return std::make_pair(0.0f, 0);
-    }
-
-    return std::make_pair(length, divisions);
-}
-
-void renderPlane(float length, int divisions, std::string filePath)
+void renderPlane(std::string filePath)
 {
-	points = parsePointsFromFile(filePath);
+	float length = 0;
+	int divisions = 0;
+
+	points = parsePointsFromFile(filePath, length, divisions);
 	int i = 0;
 
 	for(int j = 0; j < divisions * divisions; j++)
@@ -217,9 +180,7 @@ void renderScene(void)
 	{
 		if(model.find("plane") != std::string::npos)
 		{
-			auto [length, division] = extractLengthAndDivisions(model);
-
-			renderPlane(length, division, "../generatorResults/" + model);	
+			renderPlane("../generatorResults/" + model);	
 		}
 		if(model.find("box") != std::string::npos)
 		{
@@ -238,11 +199,6 @@ void renderScene(void)
 	// End of frame
 	glutSwapBuffers();
 }
-
-
-
-
-
 
 
 int main(int argc, char **argv) {

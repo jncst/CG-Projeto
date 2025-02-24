@@ -20,6 +20,8 @@ void generatePlane(float length, int divisions, const string& filename)
 	float half = length / 2;		//usado para depois podermos centrar na origem
 
 	file << (divisions + 1) * (divisions + 1) << "\n";		//número de vértices no plano
+	file << length << "\n";
+	file << divisions << "\n";
 
 	int i, j;
 	float x, z;
