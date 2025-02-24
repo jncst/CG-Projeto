@@ -64,62 +64,116 @@ std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::st
     return points;
 }
 
-
-void renderBoxPlane(std::string filePath,int which)
+std::vector<std::vector<float> > loadSphereVertices(const std::string& filename, int& slices, int& stacks) 
 {
-	float length = 0;
-	int divisions = 0;
+	std::vector<std::vector<float> > vertices;
 
-	points = parsePointsFromFile(filePath, length, divisions);
+    std::ifstream file(filename);
+    if (!file) {
+        std::cerr << "Erro ao abrir " << filename << std::endl;
+        return vertices;
+    }
 
+    int numVertices;
+    file >> numVertices;
+	file >> slices;
+	file >> stacks;
 
-	for(int n = 0; n < which; n++)
+	file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    float x, y, z;
+    while (file >> x >> y >> z) 
 	{
-		int i = 0;
+		std::vector<float> point;
+        point.push_back(x);
+        point.push_back(y);
+        point.push_back(z);
 
-		std::cout << "Faces:" << which << std::endl;
-		for(int j = 0; j < (divisions * divisions); j++)
-		{
-			//std::cout << " " << divisions*divisions << std::endl;
-		
-			glColor3f(1.0f, 1.0f, 1.0f);
-			glBegin(GL_TRIANGLES);
-	
-			int plus = divisions + 1;
-	
-			glVertex3d(points[n][i][0], points[n][i][1], points[n][i][2]);
-			std::cout << points[n][i][0] << " " << points[n][i][1] << " " << points[n][i][2] << std::endl;
-			glVertex3d(points[n][i+1][0], points[n][i+1][1], points[n][i+1][2]);
-			std::cout << points[n][i+1][0] << " " << points[n][i+1][1] << " " << points[n][i+1][2] << std::endl;
-			glVertex3d(points[n][i+plus][0], points[n][i+plus][1], points[n][i+plus][2]);
-			std::cout << points[n][i+plus][0] << " " << points[n][i+plus][1] << " " << points[n][i+plus][2] << std::endl;
-			
-	
-	
-			glEnd();
-	
-			glColor3f(1.0f, 1.0f, 1.0f);
-			glBegin(GL_TRIANGLES);
-	
-			glVertex3d(points[n][i+1][0], points[n][i+1][1], points[n][i+1][2]);
-			std::cout << points[n][i+1][0] << " " << points[n][i+1][1] << " " << points[n][i+1][2] << std::endl;
-			glVertex3d(points[n][i+plus][0], points[n][i+plus][1], points[n][i+plus][2]);
-			std::cout << points[n][i+plus][0] << " " << points[n][i+plus][1] << " " << points[n][i+plus][2] << std::endl;
-			glVertex3d(points[n][i+plus+1][0], points[n][i+plus+1][1], points[n][i+plus+1][2]);
-			std::cout << points[n][i+plus+1][0] << " " << points[n][i+plus+1][1] << " " << points[n][i+plus+1][2] << std::endl;
-			
-			//std::cout << " " << i << std::endl;
-	
-			i++;
-			if ((j+1) % divisions == 0)
-				i = (i+1);
-	
-			
-			glEnd();
-		}
-		std::cout << "Face" << n << std::endl;
-	}
+        vertices.push_back(point);
+    }
 
+    file.close();
+
+	return vertices;
+}
+
+void renderSphere(const std::string& filename) 
+{
+	int slices = 0;
+	int stacks = 0;
+    std::vector<std::vector<float> > vertices = loadSphereVertices(filename,slices,stacks);
+	std::cout << "Slices: " << slices << " Stacks: " << stacks << std::endl;
+
+	int i = 0;
+	
+
+	
+
+	glEnable(GL_DEPTH_TEST);
+    
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+    for (int j = 0; j < slices*stacks; j++) 
+	{
+		glBegin(GL_TRIANGLES);
+        glVertex3fv(vertices[i].data());
+        glVertex3fv(vertices[i + 1].data());
+        glVertex3fv(vertices[i + (slices+2)].data());
+		glEnd();
+
+		glBegin(GL_TRIANGLES);
+        glVertex3fv(vertices[i].data());
+        glVertex3fv(vertices[i + (slices+2)].data());
+        glVertex3fv(vertices[i + (slices+1)].data());
+		glEnd();
+
+		i++;
+		if((j+1) % stacks == 0)
+			i += 1;
+    }
+}
+
+
+void renderBoxPlane(std::string filePath, int which)
+{
+    float length = 0;
+    int divisions = 0;
+    points = parsePointsFromFile(filePath, length, divisions);
+
+
+    for (int n = 0; n < which; n++)
+    {
+        int i = 0;
+        std::cout << "Faces: " << which << std::endl;
+
+        for (int j = 0; j < (divisions * divisions); j++)
+        {
+            glColor3f(1.0f, 1.0f, 1.0f);
+            glBegin(GL_TRIANGLES);
+            
+            int plus = divisions + 1;
+            
+            // Primeiro triângulo (sentido horário - CW)
+            glVertex3d(points[n][i][0], points[n][i][1], points[n][i][2]);
+            glVertex3d(points[n][i + 1][0], points[n][i + 1][1], points[n][i + 1][2]);
+            glVertex3d(points[n][i + plus + 1][0], points[n][i + plus + 1][1], points[n][i + plus + 1][2]);
+            
+            glEnd();
+            glBegin(GL_TRIANGLES);
+            
+            // Segundo triângulo (sentido horário - CW)
+            glVertex3d(points[n][i + plus + 1][0], points[n][i + plus + 1][1], points[n][i + plus + 1][2]);
+            glVertex3d(points[n][i + plus][0], points[n][i + plus][1], points[n][i + plus][2]);
+            glVertex3d(points[n][i][0], points[n][i][1], points[n][i][2]);
+            
+            glEnd();
+            
+            i++;
+            if ((j + 1) % divisions == 0)
+                i = (i + 1);
+        }
+        std::cout << "Face " << n << std::endl;
+    }
 }
 
 
@@ -201,7 +255,8 @@ void renderScene(void)
 		}
 		if(model.find("sphere") != std::string::npos)
 		{
-			std::cout << "Not implemented yet" << std::endl;
+			renderSphere("../generatorResults/" + model);
+			//renderPoints();
 		}
 	}
 
@@ -214,12 +269,13 @@ int main(int argc, char **argv) {
 
 	
 // init GLUT and the windo
-	parseXML("../test files/test_files_phase_1/test_1_4.xml");
+	parseXML("../test files/test_files_phase_1/test_1_5.xml");
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(width,height);
 	glutCreateWindow("Projeto-CG@DI-UM");
+	
 		
 // Required callback registry 
 	glutDisplayFunc(renderScene);
@@ -231,8 +287,11 @@ int main(int argc, char **argv) {
 
 
 //  OpenGL settings
+	glEnable(GL_CULL_FACE);         // Habilita o culling
+    glCullFace(GL_BACK);            
+    glFrontFace(GL_CW); 
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	
 	
 // enter GLUT's main cycle
 	glutMainLoop();

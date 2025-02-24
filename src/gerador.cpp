@@ -118,6 +118,8 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
 	}
 
 	file << (slices + 1) * (stacks + 1) << "\n";
+	file << slices << "\n";
+	file << stacks << "\n";
 
 	int i, j;
 	float alpha, beta;
@@ -142,9 +144,10 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
 	file.close();
 }
 
+
 int main(int argc, char* argv[])
 {
-	string line, command, arg1, arg2, arg3, arg4;
+	string line, command, arg1, arg2, arg3, arg4, arg5, arg6;
 
 	
 
@@ -153,7 +156,7 @@ int main(int argc, char* argv[])
 		getline(cin, line);
 		stringstream ss(line);
 	
-		ss >> command >> arg1 >> arg2 >> arg3 >> arg4;
+		ss >> command >> arg1 >> arg2 >> arg3 >> arg4 >> arg5 >> arg6;
 
 		if (command == "generator")
 		{
@@ -173,7 +176,7 @@ int main(int argc, char* argv[])
 			}
 			else if (arg1 == "sphere")
 			{
-				//generateSphere(stof(arg2), stoi(arg3), arg4, arg5);
+				generateSphere(stof(arg2), stoi(arg3), stoi(arg4), arg5);
 				cout << "Sphere generated\n";
 			}
 			else
