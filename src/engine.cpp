@@ -72,7 +72,6 @@ void renderBoxPlane(std::string filePath,int which)
 
 	points = parsePointsFromFile(filePath, length, divisions);
 
-	printPoints(points);
 
 	for(int n = 0; n < which; n++)
 	{
