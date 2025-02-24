@@ -40,39 +40,72 @@ void generatePlane(float length, int divisions, const string& filename)
 	file.close();
 }
 
-void generateBox(float dimension, int divisions, const string& filename)
+void generateBox(float length, int divisions, const std::string& filename)
 {
-	ofstream file("../generatorResults/" + filename);		//abre o ficheiro para escrita
-	if (!file)
-	{
-		cerr << "Erro ao abrir o ficheiro.\n";
-		return;
-	}
+    std::ofstream file("../generatorResults/" + filename);
+    if (!file)
+    {
+        std::cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
 
-	float subdiv = dimension / divisions;
-	float half = dimension / 2;		//usado para depois podermos centrar na origem
+    float subdiv = length / divisions;
+    float half = length / 2; // Metade do comprimento para centralizar na origem
+    int totalVertices = (divisions + 1) * (divisions + 1);
 
-	file << (divisions + 1) * 3 << "\n";		//n�mero de vértices da box
+    file << totalVertices << "\n";
+    file << length << "\n";
+    file << divisions << "\n";
 
-	int i, j, k;
-	float x, y, z;
+    int i, j;
+    float x, y, z;
 
-	for (i = 0; i <= divisions; i++)
-	{
-		for (j = 0; j <= divisions; j++)
-		{
-			for (k = 0; k <= divisions; k++)
-			{
-				x = half - k * subdiv;
-				y = half - j * subdiv;
-				z = half - i * subdiv;		//começa do ponto (half,half,half)
+    // Geração das 6 faces do cubo
+    for (int face = 0; face < 6; ++face)
+    {
+        for (i = 0; i <= divisions; i++)
+        {
+            for (j = 0; j <= divisions; j++)
+            {
+                switch (face)
+                {
+                case 0: // Plano superior (y = half)
+                    x = half - j * subdiv;
+                    y = half;
+                    z = half - i * subdiv;
+                    break;
+                case 1: // Plano inferior (y = -half)
+                    x = half - j * subdiv;
+                    y = -half;
+                    z = half - i * subdiv;
+                    break;
+                case 2: // Plano frontal (z = half)
+                    x = half - j * subdiv;
+                    y = half - i * subdiv;
+                    z = half;
+                    break;
+                case 3: // Plano traseiro (z = -half)
+                    x = half - j * subdiv;
+                    y = half - i * subdiv;
+                    z = -half;
+                    break;
+                case 4: // Plano esquerdo (x = -half)
+                    x = -half;
+                    y = half - i * subdiv;
+                    z = half - j * subdiv;
+                    break;
+                case 5: // Plano direito (x = half)
+                    x = half;
+                    y = half - i * subdiv;
+                    z = half - j * subdiv;
+                    break;
+                }
+                file << x << " " << y << " " << z << "\n";
+            }
+        }
+    }
 
-				file << x << " " << y << " " << z << "\n";
-			}
-		}
-	}
-
-	file.close();
+    file.close();
 }
 
 void generateSphere(float radius, int slices, int stacks, const string& filename)

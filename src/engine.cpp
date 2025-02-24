@@ -22,42 +22,42 @@ float angleX = 0.0f, angleY = 0.0f;
 float moveX = 0.0f;
 float moveZ = 0.0f;
 
-std::vector<std::vector<float> > points;
+std::vector<std::vector<std::vector<float> > > points;
 
 
-std::vector<std::vector<float> > parsePointsFromFile(const std::string& filename, float& length, int& divisions) 
-{
+std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::string& filename, float& length, int& divisions) {
     std::ifstream file(filename);
-    std::vector<std::vector<float> > points;
+    std::vector<std::vector<std::vector<float> > > points;
 
     if (!file.is_open()) {
         std::cerr << "Erro ao abrir o arquivo!" << std::endl;
         return points;
     }
 
-    int numPoints;
-    file >> numPoints; // Lê o número de pontos
+    int numPointsPerFace;
+    file >> numPointsPerFace; // Lê o número de pontos por face
     file >> length;    // Lê o valor de length
     file >> divisions; // Lê o valor de divisions
 
     file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    // Lê os pontos e os armazena na lista de listas
-    for (int i = 0; i < numPoints; ++i) 
-	{
-        std::string line;
-        std::getline(file, line);
-        std::stringstream ss(line);
+    for (int face = 0; face < 6; ++face) { // Um cubo tem 6 faces
+        std::vector<std::vector<float> > facePoints;
+        for (int i = 0; i < numPointsPerFace; ++i) {
+            std::string line;
+            std::getline(file, line);
+            std::stringstream ss(line);
 
-        float x, y, z;
-        ss >> x >> y >> z;
+            float x, y, z;
+            ss >> x >> y >> z;
 
-        std::vector<float> point;
-		point.push_back(x);
-		point.push_back(y);
-		point.push_back(z);
-		points.push_back(point);
-
+            std::vector<float> point;
+            point.push_back(x);
+            point.push_back(y);
+            point.push_back(z);
+            facePoints.push_back(point);
+        }
+        points.push_back(facePoints);
     }
 
     file.close();
@@ -65,52 +65,60 @@ std::vector<std::vector<float> > parsePointsFromFile(const std::string& filename
 }
 
 
-void renderPlane(std::string filePath)
+void renderBoxPlane(std::string filePath,int which)
 {
 	float length = 0;
 	int divisions = 0;
 
 	points = parsePointsFromFile(filePath, length, divisions);
-	int i = 0;
 
-	for(int j = 0; j < divisions * divisions; j++)
+	printPoints(points);
+
+	for(int n = 0; n < which; n++)
 	{
-		std::cout << " " << divisions*divisions << std::endl;
+		int i = 0;
+
+		std::cout << "Faces:" << which << std::endl;
+		for(int j = 0; j < (divisions * divisions); j++)
+		{
+			//std::cout << " " << divisions*divisions << std::endl;
+		
+			glColor3f(1.0f, 1.0f, 1.0f);
+			glBegin(GL_TRIANGLES);
 	
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glBegin(GL_TRIANGLES);
-
-		int plus = divisions + 1;
-
-		glVertex3d(points[i][0], points[i][1], points[i][2]);
-		//std::cout << points[i][0] << " " << points[i][1] << " " << points[i][2] << std::endl;
-		glVertex3d(points[i+1][0], points[i+1][1], points[i+1][2]);
-		//std::cout << points[i+1][0] << " " << points[i+1][1] << " " << points[i+1][2] << std::endl;
-		glVertex3d(points[i+plus][0], points[i+plus][1], points[i+plus][2]);
-		//std::cout << points[i+plus][0] << " " << points[i+plus][1] << " " << points[i+plus][2] << std::endl;
-		
-
-
-		glEnd();
-
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glBegin(GL_TRIANGLES);
-
-		glVertex3d(points[i+1][0], points[i+1][1], points[i+1][2]);
-		//std::cout << points[i+1][0] << " " << points[i+1][1] << " " << points[i+1][2] << std::endl;
-		glVertex3d(points[i+plus][0], points[i+plus][1], points[i+plus][2]);
-		//std::cout << points[i+plus][0] << " " << points[i+plus][1] << " " << points[i+plus][2] << std::endl;
-		glVertex3d(points[i+plus+1][0], points[i+plus+1][1], points[i+plus+1][2]);
-		//std::cout << points[i+plus+1][0] << " " << points[i+plus+1][1] << " " << points[i+plus+1][2] << std::endl;
-		
-		//std::cout << " " << i << std::endl;
-
-		i++;
-		if ((j+1) % divisions == 0)
-			i = (i+1);
-
-		
-		glEnd();
+			int plus = divisions + 1;
+	
+			glVertex3d(points[n][i][0], points[n][i][1], points[n][i][2]);
+			std::cout << points[n][i][0] << " " << points[n][i][1] << " " << points[n][i][2] << std::endl;
+			glVertex3d(points[n][i+1][0], points[n][i+1][1], points[n][i+1][2]);
+			std::cout << points[n][i+1][0] << " " << points[n][i+1][1] << " " << points[n][i+1][2] << std::endl;
+			glVertex3d(points[n][i+plus][0], points[n][i+plus][1], points[n][i+plus][2]);
+			std::cout << points[n][i+plus][0] << " " << points[n][i+plus][1] << " " << points[n][i+plus][2] << std::endl;
+			
+	
+	
+			glEnd();
+	
+			glColor3f(1.0f, 1.0f, 1.0f);
+			glBegin(GL_TRIANGLES);
+	
+			glVertex3d(points[n][i+1][0], points[n][i+1][1], points[n][i+1][2]);
+			std::cout << points[n][i+1][0] << " " << points[n][i+1][1] << " " << points[n][i+1][2] << std::endl;
+			glVertex3d(points[n][i+plus][0], points[n][i+plus][1], points[n][i+plus][2]);
+			std::cout << points[n][i+plus][0] << " " << points[n][i+plus][1] << " " << points[n][i+plus][2] << std::endl;
+			glVertex3d(points[n][i+plus+1][0], points[n][i+plus+1][1], points[n][i+plus+1][2]);
+			std::cout << points[n][i+plus+1][0] << " " << points[n][i+plus+1][1] << " " << points[n][i+plus+1][2] << std::endl;
+			
+			//std::cout << " " << i << std::endl;
+	
+			i++;
+			if ((j+1) % divisions == 0)
+				i = (i+1);
+	
+			
+			glEnd();
+		}
+		std::cout << "Face" << n << std::endl;
 	}
 
 }
@@ -180,11 +188,13 @@ void renderScene(void)
 	{
 		if(model.find("plane") != std::string::npos)
 		{
-			renderPlane("../generatorResults/" + model);	
+			renderBoxPlane("../generatorResults/" + model,1);	
 		}
 		if(model.find("box") != std::string::npos)
 		{
-			std::cout << "Not implemented yet" << std::endl;
+			std::cout << "GERANDO BOX..." << std::endl;
+			renderBoxPlane("../generatorResults/" + model,6);
+			std::cout << "BOX GERADO" << std::endl;
 		}
 		if(model.find("cone") != std::string::npos)
 		{
@@ -205,7 +215,7 @@ int main(int argc, char **argv) {
 
 	
 // init GLUT and the windo
-	parseXML("../test files/test_files_phase_1/test_1_5.xml");
+	parseXML("../test files/test_files_phase_1/test_1_4.xml");
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 	glutInitWindowPosition(100,100);
