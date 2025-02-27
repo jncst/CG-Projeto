@@ -25,7 +25,7 @@ float moveZ = 0.0f;
 std::vector<std::vector<std::vector<float> > > points;
 
 
-std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::string& filename, float& length, int& divisions) {
+std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::string& filename, int& arg1, int& arg2) {
     std::ifstream file(filename);
     std::vector<std::vector<std::vector<float> > > points;
 
@@ -35,15 +35,20 @@ std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::st
     }
 
     int numPointsPerFace;
+	int faces;
+
+	file >> faces;
     file >> numPointsPerFace; // Lê o número de pontos por face
-    file >> length;    // Lê o valor de length
-    file >> divisions; // Lê o valor de divisions
+	file >> arg1;
+    file >> arg2; // Lê o valor de divisions
 
     file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-    for (int face = 0; face < 6; ++face) { // Um cubo tem 6 faces
+    for (int face = 0; face < faces; ++face) 
+	{ // Um cubo tem 6 faces
         std::vector<std::vector<float> > facePoints;
-        for (int i = 0; i < numPointsPerFace; ++i) {
+        for (int i = 0; i < numPointsPerFace; ++i) 
+		{
             std::string line;
             std::getline(file, line);
             std::stringstream ss(line);
@@ -64,51 +69,16 @@ std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::st
     return points;
 }
 
-std::vector<std::vector<float> > loadSphereVertices(const std::string& filename, int& slices, int& stacks) 
-{
-	std::vector<std::vector<float> > vertices;
-
-    std::ifstream file(filename);
-    if (!file) {
-        std::cerr << "Erro ao abrir " << filename << std::endl;
-        return vertices;
-    }
-
-    int numVertices;
-    file >> numVertices;
-	file >> slices;
-	file >> stacks;
-
-	file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    float x, y, z;
-    while (file >> x >> y >> z) 
-	{
-		std::vector<float> point;
-        point.push_back(x);
-        point.push_back(y);
-        point.push_back(z);
-
-        vertices.push_back(point);
-    }
-
-    file.close();
-
-	return vertices;
-}
 
 void renderSphere(const std::string& filename) 
 {
 	int slices = 0;
 	int stacks = 0;
-    std::vector<std::vector<float> > vertices = loadSphereVertices(filename,slices,stacks);
+    points = parsePointsFromFile(filename,slices,stacks);
 	std::cout << "Slices: " << slices << " Stacks: " << stacks << std::endl;
 
 	int i = 0;
 	
-
-	
-
 	glEnable(GL_DEPTH_TEST);
     
 	glColor3f(1.0f, 1.0f, 1.0f);
@@ -116,15 +86,15 @@ void renderSphere(const std::string& filename)
     for (int j = 0; j < slices*stacks; j++) 
 	{
 		glBegin(GL_TRIANGLES);
-        glVertex3fv(vertices[i].data());
-        glVertex3fv(vertices[i + 1].data());
-        glVertex3fv(vertices[i + (slices+2)].data());
+        glVertex3fv(points[0][i].data());
+        glVertex3fv(points[0][i + 1].data());
+        glVertex3fv(points[0][i + (slices+2)].data());
 		glEnd();
 
 		glBegin(GL_TRIANGLES);
-        glVertex3fv(vertices[i].data());
-        glVertex3fv(vertices[i + (slices+2)].data());
-        glVertex3fv(vertices[i + (slices+1)].data());
+        glVertex3fv(points[0][i].data());
+        glVertex3fv(points[0][i + (slices+2)].data());
+        glVertex3fv(points[0][i + (slices+1)].data());
 		glEnd();
 
 		i++;
@@ -133,12 +103,107 @@ void renderSphere(const std::string& filename)
     }
 }
 
+void renderCone(const std::string& filename) 
+{
+	int slices = 0;
+	int stacks = 0;
+	points = parsePointsFromFile(filename,slices,stacks);
+	std::cout << "Slices: " << slices << " Stacks: " << stacks << std::endl;
+
+	for (int j = 0; j < slices ; j++) 
+	{
+		glColor3f(1.0f, 1.0f, 1.0f);
+
+		if(j + 1 == slices)
+		{
+			glBegin(GL_TRIANGLES);
+			
+			glVertex3fv(points[0][j].data());
+			glVertex3fv(points[0][0].data());      // BASE
+			glVertex3fv(points[0][slices].data());
+			
+			glEnd();
+			break;
+		}
+		
+		glBegin(GL_TRIANGLES);
+		
+		glVertex3fv(points[0][j].data());
+		glVertex3fv(points[0][j + 1].data());		
+		glVertex3fv(points[0][slices].data());
+		
+		glEnd();
+
+	}
+
+	int i = 0;
+
+	for(int st = 0; st < stacks - 1; st++)
+	{
+		for(int j = 0; j < slices ; j++)
+		{
+			glColor3f(1.0f, 1.0f, 1.0f);
+
+			glBegin(GL_TRIANGLES);
+			
+			glVertex3fv(points[0][i].data());
+			glVertex3fv(points[0][i+slices+1].data());      
+			glVertex3fv(points[0][i+1].data());
+			
+			glEnd();									//MEIO
+
+			glBegin(GL_TRIANGLES);
+			
+			glVertex3fv(points[0][i+slices+1].data());
+			glVertex3fv(points[0][i+slices+2].data());      
+			glVertex3fv(points[0][i+1].data());
+			
+			glEnd();
+
+			i++;
+		}
+		i++;
+	}
+	std :: cout << "Stacks: " << i << std::endl;
+
+	for(int f = 0; f < slices - 1; f++)
+	{
+
+		if(f + 1 == slices)
+		{
+			glBegin(GL_TRIANGLES);
+			
+			glVertex3fv(points[0][i].data());
+			glVertex3fv(points[0][(slices+1)*stacks].data());      // BASE
+			glVertex3fv(points[0][i-(slices-1)].data());
+			
+			glEnd();
+			break;
+		}
+
+		glColor3f(1.0f, 1.0f, 1.0f);
+
+		glBegin(GL_TRIANGLES);
+		
+		glVertex3fv(points[0][i].data());
+		glVertex3fv(points[0][(slices+1)*stacks].data());
+		glVertex3fv(points[0][i+1].data());
+
+		glEnd();
+		i++;
+	}
+
+	
+
+}
+
+
 
 void renderBoxPlane(std::string filePath, int which)
 {
-    float length = 0;
+    int any = 0;
     int divisions = 0;
-    points = parsePointsFromFile(filePath, length, divisions);
+    points = parsePointsFromFile(filePath, any, divisions);
 
 
     for (int n = 0; n < which; n++)
@@ -251,7 +316,7 @@ void renderScene(void)
 		}
 		if(model.find("cone") != std::string::npos)
 		{
-			std::cout << "Not implemented yet" << std::endl;
+			renderCone("../generatorResults/" + model);
 		}
 		if(model.find("sphere") != std::string::npos)
 		{
@@ -269,7 +334,7 @@ int main(int argc, char **argv) {
 
 	
 // init GLUT and the windo
-	parseXML("../test files/test_files_phase_1/test_1_5.xml");
+	parseXML("../test files/test_files_phase_1/test_1_1.xml");
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 	glutInitWindowPosition(100,100);

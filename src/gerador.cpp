@@ -7,6 +7,56 @@
 
 using namespace std;
 
+void generateCone(float radius, float height, int slices, int stacks, const std::string& filename)
+{
+    std::ofstream file("../generatorResults/" + filename);
+    if (!file)
+    {
+        std::cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
+
+    file << "1\n";  // Identificador do tipo de objeto (por exemplo, 1 para cone)
+    file << (slices + 1) * stacks + 1 << "\n";  // Número total de vértices
+    file << slices << "\n";
+    file << stacks << "\n";
+
+    float angleStep = 2 * M_PI / slices;
+    float stackHeight = height / stacks;
+    float stackRadiusStep = radius / stacks;
+
+    // Gerar os vértices das stacks (camada por camada)
+    for (int i = 0; i <= stacks; i++) 
+    {
+        float r = radius - (i * stackRadiusStep);  // Raio da camada atual
+        float y = i * stackHeight;  // Mantemos Y como altura
+
+        if (y == height)
+        {
+            file << "0 " << y << " 0\n";  // Vértice no topo do cone
+            break;
+        }
+
+        // **Gerar os pontos da base em sentido horário (CW)**
+        for (int j = slices - 1; j >= 0; j--) 
+        {
+            float theta = j * angleStep;
+
+            float x = r * cos(theta);  // Posição X no círculo
+            float z = r * sin(theta);  // Posição Z no círculo
+
+            file << x << " " << y << " " << z << "\n";
+        }
+
+        file << "0 0 0\n";  // Centro da base
+    }
+
+    file.close();
+}
+
+
+
+
 void generatePlane(float length, int divisions, const string& filename)
 {
 	ofstream file("../generatorResults/" + filename);		//abre o ficheiro para escrita
@@ -19,8 +69,9 @@ void generatePlane(float length, int divisions, const string& filename)
 	float subdiv = length / divisions;
 	float half = length / 2;		//usado para depois podermos centrar na origem
 
+	file << 1 << "\n";		
 	file << (divisions + 1) * (divisions + 1) << "\n";		//número de vértices no plano
-	file << length << "\n";
+	file << 0 << "\n";		
 	file << divisions << "\n";
 
 	int i, j;
@@ -53,8 +104,9 @@ void generateBox(float length, int divisions, const std::string& filename)
     float half = length / 2; // Metade do comprimento para centralizar na origem
     int totalVertices = (divisions + 1) * (divisions + 1);
 
+	file << 6 << "\n";
     file << totalVertices << "\n";
-    file << length << "\n";
+	file << 0 << "\n";
     file << divisions << "\n";
 
     int i, j;
@@ -117,6 +169,7 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
 		return;
 	}
 
+	file << 1 << "\n";
 	file << (slices + 1) * (stacks + 1) << "\n";
 	file << slices << "\n";
 	file << stacks << "\n";
@@ -172,6 +225,7 @@ int main(int argc, char* argv[])
 			}
 			else if (arg1 == "cone")
 			{
+				generateCone(stof(arg2),stof(arg3),stoi(arg4),stoi(arg5),arg6);
 				cout << "Cone generated\n";
 			}
 			else if (arg1 == "sphere")
@@ -192,7 +246,7 @@ int main(int argc, char* argv[])
 		else if(command == "test")
 		{
 		    // Parse the XML file
-			parseXML("../test files/test_files_phase_1/test_1_5.xml");
+			parseXML("../test files/test_files_phase_1/test_1_3.xml");
 
 			// Print parsed data
 			std::cout << "Window: " << width << "x" << height << std::endl;
