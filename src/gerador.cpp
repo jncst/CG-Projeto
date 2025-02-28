@@ -3,7 +3,6 @@
 #include <cmath>
 #include <vector>
 #include <sstream>
-#include "parserXML.h"
 
 using namespace std;
 
@@ -242,25 +241,6 @@ int main(int argc, char* argv[])
 		else if(command == "quit")
 		{
 			break;
-		}
-		else if(command == "test")
-		{
-		    // Parse the XML file
-			parseXML("../test files/test_files_phase_1/test_1_3.xml");
-
-			// Print parsed data
-			std::cout << "Window: " << width << "x" << height << std::endl;
-			std::cout << "Camera Position: (" << camX << ", " << camY << ", " << camZ << ")\n";
-			std::cout << "LookAt: (" << lookAtX << ", " << lookAtY << ", " << lookAtZ << ")\n";
-			std::cout << "Up Vector: (" << upX << ", " << upY << ", " << upZ << ")\n";
-			std::cout << "Projection: FOV=" << fov << ", Near=" << near << ", Far=" << far << "\n";
-		
-			std::cout << "Models:" << std::endl;
-			for (const std::string& model : models) 
-			{
-				std::cout << " - " << model << std::endl;
-			}
-			
 		}
 		else
 		{

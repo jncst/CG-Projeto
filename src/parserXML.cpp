@@ -1,9 +1,11 @@
+// parserXML.cpp
 #include "parserXML.h"
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
-using namespace tinyxml2;
-
-// Define the global variables
+// Definição das variáveis globais
 int width, height;
 float camX, camY, camZ;
 float lookAtX, lookAtY, lookAtZ;
@@ -11,71 +13,93 @@ float upX, upY, upZ;
 float fov, near, far;
 std::vector<std::string> models;
 
-void parseXML(const char* filename) 
-{
-    tinyxml2::XMLDocument doc;
+// Função auxiliar para extrair valor de atributo
+std::string getAttributeValue(const std::string& line, const std::string& attr) {
+    std::string search = attr + "=\"";
+    size_t pos = line.find(search);
+    if (pos != std::string::npos) {
+        pos += search.length();
+        size_t endPos = line.find("\"", pos);
+        if (endPos != std::string::npos) {
+            return line.substr(pos, endPos - pos);
+        }
+    }
+    return "";
+}
 
-    if (doc.LoadFile(filename) != XML_SUCCESS) 
-    {
-        std::cerr << "Error loading file " << filename << std::endl;
+void parseXML(const char* filename) {
+
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Erro ao abrir arquivo " << filename << std::endl;
         return;
     }
-
-    // Window
-    XMLElement* window = doc.FirstChildElement("world")->FirstChildElement("window");
-    if (window) {
-        width = window->IntAttribute("width");
-        height = window->IntAttribute("height");
-    }
-
-    // Camera
-    XMLElement* camera = doc.FirstChildElement("world")->FirstChildElement("camera");
-    if (camera) {
-        XMLElement* position = camera->FirstChildElement("position");
-        if (position) {
-            camX = position->FloatAttribute("x");
-            camY = position->FloatAttribute("y");
-            camZ = position->FloatAttribute("z");
-        }
-
-        XMLElement* lookAt = camera->FirstChildElement("lookAt");
-        if (lookAt) {
-            lookAtX = lookAt->FloatAttribute("x");
-            lookAtY = lookAt->FloatAttribute("y");
-            lookAtZ = lookAt->FloatAttribute("z");
-        }
-
-        XMLElement* up = camera->FirstChildElement("up");
-        if (up) {
-            upX = up->FloatAttribute("x");
-            upY = up->FloatAttribute("y");
-            upZ = up->FloatAttribute("z");
-        }
-
-        XMLElement* projection = camera->FirstChildElement("projection");
-        if (projection) {
-            fov = projection->FloatAttribute("fov");
-            near = projection->FloatAttribute("near");
-            far = projection->FloatAttribute("far");
-        }
-    }
-
-    // Models
+    
+    std::string line;
     models.clear();
-    XMLElement* modelsNode = doc.FirstChildElement("world")
-                                 ->FirstChildElement("group")
-                                 ->FirstChildElement("models");
-
-    if (modelsNode) {
-        for (XMLElement* model = modelsNode->FirstChildElement("model"); model; model = model->NextSiblingElement("model")) 
-        {
-            const char* file = model->Attribute("file");
-            if (file) {
-                models.push_back(file);
+    
+    while (std::getline(file, line)) {
+        // Window
+        if (line.find("<window") != std::string::npos) {
+            std::string widthStr = getAttributeValue(line, "width");
+            std::string heightStr = getAttributeValue(line, "height");
+            
+            if (!widthStr.empty()) width = std::stoi(widthStr);
+            if (!heightStr.empty()) height = std::stoi(heightStr);
+        }
+        
+        // Camera position
+        else if (line.find("<position") != std::string::npos) {
+            std::string xStr = getAttributeValue(line, "x");
+            std::string yStr = getAttributeValue(line, "y");
+            std::string zStr = getAttributeValue(line, "z");
+            
+            if (!xStr.empty()) camX = std::stof(xStr);
+            if (!yStr.empty()) camY = std::stof(yStr);
+            if (!zStr.empty()) camZ = std::stof(zStr);
+        }
+        
+        // Camera lookAt
+        else if (line.find("<lookAt") != std::string::npos) {
+            std::string xStr = getAttributeValue(line, "x");
+            std::string yStr = getAttributeValue(line, "y");
+            std::string zStr = getAttributeValue(line, "z");
+            
+            if (!xStr.empty()) lookAtX = std::stof(xStr);
+            if (!yStr.empty()) lookAtY = std::stof(yStr);
+            if (!zStr.empty()) lookAtZ = std::stof(zStr);
+        }
+        
+        // Camera up
+        else if (line.find("<up") != std::string::npos) {
+            std::string xStr = getAttributeValue(line, "x");
+            std::string yStr = getAttributeValue(line, "y");
+            std::string zStr = getAttributeValue(line, "z");
+            
+            if (!xStr.empty()) upX = std::stof(xStr);
+            if (!yStr.empty()) upY = std::stof(yStr);
+            if (!zStr.empty()) upZ = std::stof(zStr);
+        }
+        
+        // Camera projection
+        else if (line.find("<projection") != std::string::npos) {
+            std::string fovStr = getAttributeValue(line, "fov");
+            std::string nearStr = getAttributeValue(line, "near");
+            std::string farStr = getAttributeValue(line, "far");
+            
+            if (!fovStr.empty()) fov = std::stof(fovStr);
+            if (!nearStr.empty()) near = std::stof(nearStr);
+            if (!farStr.empty()) far = std::stof(farStr);
+        }
+        
+        // Models
+        else if (line.find("<model") != std::string::npos) {
+            std::string fileStr = getAttributeValue(line, "file");
+            if (!fileStr.empty()) {
+                models.push_back(fileStr);
             }
         }
     }
+    
+    file.close();
 }
-
-
-
