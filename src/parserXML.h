@@ -1,7 +1,6 @@
 #ifndef PARSERXML_H
 #define PARSERXML_H
 
-#include <tinyxml2.h>
 #include <vector>
 #include <string>
 

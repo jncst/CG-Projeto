@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
 # Project Name
 PROJECT(engine)
@@ -19,7 +19,7 @@ endif(NOT OPENGL_FOUND)
 if(WIN32)
 
     message(STATUS "Toolkits_DIR set to: " ${TOOLKITS_FOLDER})
-    set(TOOLKITS_FOLDER "" CACHE PATH "Path to Toolkits folder")
+    set(TOOLKITS_FOLDER "C:/Users/Andre/Documents/Work/Universidade/3º Ano/Semestre-2/CG/toolkits" CACHE PATH "Path to Toolkits folder")
     
     if (NOT EXISTS "${TOOLKITS_FOLDER}/glut/GL/glut.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glut/glut32.lib")
         message(ERROR ": GLUT not found")

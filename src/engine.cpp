@@ -1,6 +1,7 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
+#include <cstdlib>
 #include <GL/glut.h>
 #endif
 
@@ -226,7 +227,7 @@ void renderScene(void)
 int main(int argc, char **argv) {
 
     // init GLUT and the windo
-        parseXML("../test files/test_files_phase_1/teste.xml");
+        parseXML("../test files/test_files_phase_1/test_1_1.xml");
         glutInit(&argc, argv);
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
         glutInitWindowPosition(100,100);
