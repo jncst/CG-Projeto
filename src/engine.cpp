@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-# include <math.h>
+#include <math.h>
 
 #include "parserXML.h"
 
@@ -18,7 +18,7 @@ using namespace std;
 
 // Variáveis globais para controlar a rotação da câmara
 
-int CAMERA_ACTIVE = 0; // Mudar para 1 para conseguir usar rato para mover camera
+bool CAMERA_ACTIVE = true; // Mudar para true para conseguir usar rato para mover camera
 
 float angleX = 0.0f, angleY = 0.0f;
 int lastMouseX, lastMouseY;
@@ -232,13 +232,134 @@ void AddSphere (string filepath)
 	getline (file, temp);
 	int num_slices = getNum(temp);
 
+	// Numero de Stacks
+	getline (file, temp);
+	int num_stacks = getNum(temp);
+
 	// Cria lista de vertices
 	vector <Vertice> vertices;
+
+	for (int i = 0; i < num_vertices; i ++)
+	{
+		getline (file, temp);
+		vertices.push_back(getVertice(temp));
+	}
+
+	// Primeira stack
+
+	for (int i = 1 ; i <= num_slices; i++)
+	{
+		if (i == num_slices)
+		{
+			desenhaTriangulo(vertices [0], vertices [i], vertices [1]);
+		}
+		else
+		{
+			desenhaTriangulo(vertices [0], vertices [i], vertices [i + 1]);
+		}
+	}
+	// Stacks intermediarias
+
+	for (int i = 1 ; i <= num_vertices - 2 - num_slices ; i++)
+	{
+		if (i % num_slices == 0)
+		{
+			desenhaTriangulo(vertices[i], vertices[i + num_slices], vertices [i + 1 - num_slices]);
+			desenhaTriangulo(vertices[i + 1], vertices [i + 1 - num_slices], vertices[i + num_slices]);
+		}
+		else
+		{
+			desenhaTriangulo(vertices[i], vertices[i + num_slices], vertices [i + 1]);
+			desenhaTriangulo(vertices[i + 1], vertices[i + num_slices], vertices [i + num_slices + 1]);
+		}
+	}
+
+	for (int i = 1 ; i <= num_slices; i++)
+	{
+		if (i == num_slices)
+		{
+			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 1]);
+		}
+		else
+		{
+			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 1 - i - 1]);
+		}
+	}
 }
 
 void AddCone (string filepath)
 {
+	string temp = "";
+	ifstream file(filepath);
 
+	// Remove tipo de objeto
+	getline(file, temp);
+
+	// Numero de Vertices
+	getline(file, temp);
+	int num_vertices = getNum(temp);
+
+	// Numero de Slices
+	getline (file, temp);
+	int num_slices = getNum(temp);
+
+	// Numero de Stacks
+	getline (file, temp);
+	int num_stacks = getNum(temp);
+
+	// Cria lista de vertices
+	vector <Vertice> vertices;
+
+	for (int i = 0; i < num_vertices; i ++)
+	{
+		getline (file, temp);
+		vertices.push_back(getVertice(temp));
+	}
+
+	// Primeira stack
+
+	//for (int i = 1 ; i <= valor ; i++)
+	for (int i = 1 ; i <= num_slices; i++)
+	{
+		if (i == num_slices)
+		{
+			desenhaTriangulo(vertices [0], vertices [i], vertices [1]);
+		}
+		else
+		{
+			desenhaTriangulo(vertices [0], vertices [i], vertices [i + 1]);
+		}
+	}
+	// Stacks intermediarias
+
+	// for (int i = 1 ; i <= valor ; i++)
+	for (int i = 1 ; i <= num_vertices - 2 - num_slices ; i++)
+	{
+		if (i % num_slices == 0)
+		{
+			cout << "FIMMMMM\n";
+			desenhaTriangulo(vertices[i], vertices[i + num_slices], vertices [i + 1 - num_slices]);
+			desenhaTriangulo(vertices[i + 1], vertices [i + 1 - num_slices], vertices[i + num_slices]);
+		}
+		else
+		{
+			cout << "NORMAL\n";
+			desenhaTriangulo(vertices[i], vertices[i + num_slices], vertices [i + 1]);
+			desenhaTriangulo(vertices[i + 1], vertices[i + num_slices], vertices [i + num_slices + 1]);
+		}
+	}
+
+	for (int i = 1 ; i <= num_slices; i++)
+	{
+		if (i == num_slices)
+		{
+			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 1]);
+		}
+		else
+		{
+			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 1 - i - 1]);
+		}
+	}
 }
 
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
@@ -323,7 +444,10 @@ void renderScene(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
 
+	glLoadIdentity();
+	
 	// Mover camera com rato
 	if (CAMERA_ACTIVE)
 	{
@@ -336,11 +460,14 @@ void renderScene(void)
 		float camX = radius * cos(radX) * cos(radY);
 		float camY = radius * sin(radY);
 		float camZ = radius * sin(radX) * cos(radY);
+		gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
+	}
+	else
+	{
+		gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 	}
 
 	//* Set the camera
-	glLoadIdentity();
-	gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 
     //* Desenha eixos x y z
 
@@ -390,7 +517,7 @@ void renderScene(void)
 		}
 	}
 
-	// End of frame
+	// End of framesa
 	glutSwapBuffers();
 }
 

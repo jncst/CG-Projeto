@@ -15,46 +15,39 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
         return;
     }
 
-    file << "1\n";  // Identificador do tipo de objeto (por exemplo, 1 para cone)
-    file << (slices + 1) * stacks + 1 << "\n";  // Número total de vértices
-    file << slices << "\n";
-    file << stacks << "\n";
+	file << "CONE\n";
+	file << "VERT " << slices * stacks + 2 << "\n";		//número de vértices da esfera
+	file << "SLICES " << slices << "\n";
+	file << "STACKS " << stacks << "\n";
 
     float angleStep = 2 * M_PI / slices;
     float stackHeight = height / stacks;
-    float stackRadiusStep = radius / stacks;
-
+	
+	// Centro da base
+	file << "0 0 0\n";
+	
     // Gerar os vértices das stacks (camada por camada)
-    for (int i = 0; i <= stacks; i++) 
+    for (int i = 0; i < stacks; i++) 
     {
-        float r = radius - (i * stackRadiusStep);  // Raio da camada atual
+        float r = (radius * (height - (i * stackHeight))) / height;
         float y = i * stackHeight;  // Mantemos Y como altura
 
-        if (y == height)
-        {
-            file << "0 " << y << " 0\n";  // Vértice no topo do cone
-            break;
-        }
-
-        // **Gerar os pontos da base em sentido horário (CW)**
-        for (int j = slices - 1; j >= 0; j--) 
+        for (int j = 0; j < slices; j++)
         {
             float theta = j * angleStep;
 
             float x = r * cos(theta);  // Posição X no círculo
-            float z = r * sin(theta);  // Posição Z no círculo
-
-            file << x << " " << y << " " << z << "\n";
+            float z = - r * sin(theta);  // Posição Z no círculo
+            //file << "x: " << x << " y: " << y << " z: " << z << "\n";
+			file << x << " " << y << " " << z << "\n";
         }
-
-        file << "0 0 0\n";  // Centro da base
     }
+
+	// Centro da Topo
+	file << "0 " << height << " 0\n";
 
     file.close();
 }
-
-
-
 
 void generatePlane(float length, int divisions, const string& filename)
 {
@@ -103,7 +96,7 @@ void generateBox(float length, int divisions, const std::string& filename)
     int totalVertices = (divisions + 1) * (divisions + 1) * 6;
 
 	file << "BOX\n";
-	file << "VERT " << totalVertices << "\n";		//número de vértices no plano	
+	file << "VERT " << totalVertices << "\n";		//número de vértices do cubo	
 	file << "SLICES " << divisions << "\n";
 
     int i, j;
@@ -166,30 +159,44 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
 		return;
 	}
 
-	file << 1 << "\n";
-	file << (slices + 1) * (stacks + 1) << "\n";
-	file << slices << "\n";
-	file << stacks << "\n";
+	// file << 1 << "\n";
+	// file << (slices + 1) * (stacks + 1) << "\n";
+	// file << slices << "\n";
+	// file << stacks << "\n";
+
+	file << "SPHERE\n";
+	file << "VERT " << slices * (stacks - 1) + 2 << "\n";		//número de vértices da esfera
+	file << "SLICES " << slices << "\n";
+	file << "STACKS " << stacks << "\n";
 
 	int i, j;
 	float alpha, beta;
 	float x, y, z;
 
-	for (i = 0; i <= stacks; i++)
+	// Ponto centro base
+	file << 0 << " " << -radius << " " << 0 << "\n";
+
+	// Pontos meio
+
+	for (i = 1; i < stacks; i++)
 	{
 		beta = (M_PI * i / stacks) + (M_PI / 2);
 
-		for (j = 0; j <= slices; j++)
+		for (j = 0; j < slices; j++)
 		{
 			alpha = 2 * M_PI * j / slices;
 
 			x = radius * cos(beta) * sin(alpha);		//conversão para coordenadas polares
-			y = radius * sin(beta);
+			y = -radius * sin(beta);
 			z = radius * cos(beta) * cos(alpha);
 
 			file << x << " " << y << " " << z << "\n";
 		}
 	}
+
+	// Ponto centro topo
+
+	file << 0 << " " << radius << " " << 0 << "\n";
 
 	file.close();
 }
