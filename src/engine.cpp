@@ -278,7 +278,7 @@ void AddSphere (string filepath)
 	{
 		if (i == num_slices)
 		{
-			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 1]);
+			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 2]);
 		}
 		else
 		{
@@ -353,7 +353,7 @@ void AddCone (string filepath)
 	{
 		if (i == num_slices)
 		{
-			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 1]);
+			desenhaTriangulo(vertices [num_vertices - 1], vertices [num_vertices - 1 - i], vertices [num_vertices - 2]);
 		}
 		else
 		{
@@ -525,10 +525,10 @@ void renderScene(void)
 
 
 //* MAIN ///////////////////////////////////////////////////////////////////////////////
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
     // init GLUT and the windo
-        parseXML("../test files/test_files_phase_1/teste.xml");
+        parseXML("../test files/test_files_phase_1/test_1_1.xml");
         glutInit(&argc, argv);
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
         glutInitWindowPosition(100,100);
@@ -558,4 +558,4 @@ int main(int argc, char **argv) {
         glutMainLoop();
         
         return 1;
-    }
+}
