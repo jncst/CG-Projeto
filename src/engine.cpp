@@ -10,10 +10,25 @@
 #include <string>
 #include <sstream>
 #include <vector>
+# include <math.h>
 
 #include "parserXML.h"
 
 using namespace std;
+
+// Variáveis globais para controlar a rotação da câmara
+
+int CAMERA_ACTIVE = 0; // Mudar para 1 para conseguir usar rato para mover camera
+
+float angleX = 0.0f, angleY = 0.0f;
+int lastMouseX, lastMouseY;
+bool mousePressed = false;
+
+
+
+// TESTING STUFF
+int valor = 100; // valor para limitar numero de triangulos em funcoes para ajudar a vizualizar a contruçao do objeto
+
 
 class Vertice
 {
@@ -67,6 +82,10 @@ int getNum(const string& line)
     return number;
 }
 
+
+
+//* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
+
 void AddPlane (string filepath)
 {
 	string temp = "";
@@ -104,15 +123,22 @@ void AddPlane (string filepath)
 	int linhas = 1;
 
 	//* Desenhar o plano
+
+	// Iterar pelos vertices
 	for (int i = 0; i < num_vertices; i++)
 	{
+		// Caso seja o ultimo vertice que queremos desenhar triangulos de uma linha
 		if (i != 0 && (i + 1) % (num_slices + 1) == 0)
 		{
+			// Passa a proxima linha
 			linhas ++;
+
+			// Se a proxima linha for maior que o total de linhas para
 			if (linhas > num_slices)
 			{
 				break;
 			}
+
 			continue;
 		}
 		
@@ -123,18 +149,148 @@ void AddPlane (string filepath)
 
 void AddBox (string filepath)
 {
+	string temp = "";
+	ifstream file(filepath);
 
+	// Remove tipo de objeto
+	getline(file, temp);
+
+	// Numero de Vertices
+	getline(file, temp);
+	int num_vertices = getNum(temp);
+
+	// Numero de Slices
+	getline (file, temp);
+	int num_slices = getNum(temp);
+
+	// Cria lista de vertices
+	vector <Vertice> vertices;
+
+	for (int i = 0; i < num_vertices; i ++)
+	{
+		getline (file, temp);
+		vertices.push_back(getVertice(temp));
+	}
+
+	int linhas = 1;
+	int face = 1;
+	
+	//* Desenhar o plano
+
+	// Iterar pelos vertices
+	for (int i = 0; i < num_vertices; i++)
+	{
+		// CENA DE TESTE
+		if (i > valor)
+		{
+			break;
+		}
+
+		// Caso seja o ultimo vertice que queremos desenhar triangulos de uma linha
+		if (i != 0 && (i + 1) % (num_slices + 1) == 0)
+		{
+			// Passa à proxima linha
+			linhas ++;
+
+			// Se a proxima linha for maior que o numero de linhas total
+			if (linhas > num_slices)
+			{
+				// Passa à proxima face
+				face ++;
+				i += num_slices + 1;
+
+				// Sai quando chega ao fim da ultima face
+				if (face > 6)
+				{
+					break;
+				}
+
+				linhas = 1;
+			}
+
+			continue;
+		}
+		
+		desenhaTriangulo(vertices[i], vertices[i + 1], vertices[i + num_slices + 1]);
+		desenhaTriangulo(vertices[i + 1], vertices[i + num_slices + 2], vertices[i + num_slices + 1]);
+	}
 }
 
 void AddSphere (string filepath)
 {
+	string temp = "";
+	ifstream file(filepath);
 
+	// Remove tipo de objeto
+	getline(file, temp);
+
+	// Numero de Vertices
+	getline(file, temp);
+	int num_vertices = getNum(temp);
+
+	// Numero de Slices
+	getline (file, temp);
+	int num_slices = getNum(temp);
+
+	// Cria lista de vertices
+	vector <Vertice> vertices;
 }
 
 void AddCone (string filepath)
 {
 
 }
+
+//* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
+
+
+
+//* CENAS DE INPUT /////////////////////////////////////////////////////////////////////
+void keyboard(unsigned char key, int x, int y)
+{
+    if (key == 'a') {
+        valor++; // Incrementa a variável
+    } else if (key == 's') {
+		if (valor > 0)
+		{
+			valor--; // Decrementa a variável
+		}
+    }
+    std::cout << "Valor: " << valor << std::endl;
+    glutPostRedisplay(); // Atualiza a janela
+}
+
+void mouseMotion(int x, int y) {
+    if (mousePressed) {
+        angleX += (x - lastMouseX) * 0.5f;
+        angleY += (y - lastMouseY) * 0.5f;
+
+		if (angleY > 80.0f) angleY = 80.0f;
+        if (angleY < -80.0f) angleY = -80.0f;
+        
+        lastMouseX = x;
+        lastMouseY = y;
+
+        glutPostRedisplay(); // Redesenhar a cena com nova rotação
+    }
+}
+
+void mouseClick(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON) {
+        if (state == GLUT_DOWN) {
+            mousePressed = true;
+            lastMouseX = x;
+            lastMouseY = y;
+        } else {
+            mousePressed = false;
+        }
+    }
+}
+
+//* CENAS DE INPUT /////////////////////////////////////////////////////////////////////
+
+
+//* FUNCOES DO OPENGL /////////////////////////////////////////////////////////////////////
 
 void changeSize(int w, int h)
 {
@@ -168,11 +324,25 @@ void renderScene(void)
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// set the camera
+	// Mover camera com rato
+	if (CAMERA_ACTIVE)
+	{
+		// Converter ângulos para radianos
+		float radX = angleX * M_PI / 180.0f;
+		float radY = angleY * M_PI / 180.0f;
+		
+		// Definir posição da câmara em torno do ponto (0,0,0)
+		float radius = 4.0f; // Distância da câmara ao centro
+		float camX = radius * cos(radX) * cos(radY);
+		float camY = radius * sin(radY);
+		float camZ = radius * sin(radX) * cos(radY);
+	}
+
+	//* Set the camera
 	glLoadIdentity();
 	gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 
-    //* put axis drawing in here
+    //* Desenha eixos x y z
 
 	glBegin(GL_LINES);
 	// X axis in red
@@ -224,10 +394,14 @@ void renderScene(void)
 	glutSwapBuffers();
 }
 
+//* FUNCOES DO OPENGL /////////////////////////////////////////////////////////////////////
+
+
+//* MAIN ///////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv) {
 
     // init GLUT and the windo
-        parseXML("../test files/test_files_phase_1/test_1_1.xml");
+        parseXML("../test files/test_files_phase_1/teste.xml");
         glutInit(&argc, argv);
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
         glutInitWindowPosition(100,100);
@@ -240,7 +414,12 @@ int main(int argc, char **argv) {
         glutReshapeFunc(changeSize);
     
     // put here the registration of the keyboard callbacks
-    
+		cout << "TESTE\n";
+		glutKeyboardFunc(keyboard);
+
+		glutMouseFunc(mouseClick);
+    	glutMotionFunc(mouseMotion);
+
     //  OpenGL settings
         glEnable(GL_CULL_FACE);         // Habilita o culling
         glCullFace(GL_BACK);            

@@ -18,11 +18,23 @@
 #include <ostream>
 
 float z = 2.0f;
-float angleX = 0.0f, angleY = 0.0f;
+//float angleX = 0.0f, angleY = 0.0f;
 float moveX = 0.0f;
 float moveZ = 0.0f;
 
 std::vector<std::vector<std::vector<float> > > points;
+
+// TESTE STUFF/////////////////////////////////////////////
+
+# include <math.h>
+// Variáveis globais para controlar a rotação da câmara
+float angleX = 0.0f, angleY = 0.0f;
+int lastMouseX, lastMouseY;
+bool mousePressed = false;
+
+int valor = 1;
+
+///////////////////////////////////////////////////////////
 
 
 std::vector<std::vector<std::vector<float> > > parsePointsFromFile(const std::string& filename, int& arg1, int& arg2) {
@@ -278,6 +290,18 @@ void renderScene(void)
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// CENAS TESTE ////////////////////
+	
+	// Converter ângulos para radianos
+    float radX = angleX * M_PI / 180.0f;
+    float radY = angleY * M_PI / 180.0f;
+
+    // Definir posição da câmara em torno do ponto (0,0,0)
+    float radius = 4.0f; // Distância da câmara ao centro
+    float camX = radius * cos(radX) * cos(radY);
+    float camY = radius * sin(radY);
+    float camZ = radius * sin(radX) * cos(radY);
+
 	// set the camera
 	glLoadIdentity();
 	gluLookAt(camX, camY, camZ,		
@@ -329,12 +353,36 @@ void renderScene(void)
 	glutSwapBuffers();
 }
 
+void mouseMotion(int x, int y) {
+    if (mousePressed) {
+        angleX += (x - lastMouseX) * 0.5f;
+        angleY += (y - lastMouseY) * 0.5f;
+        
+        lastMouseX = x;
+        lastMouseY = y;
+
+        glutPostRedisplay(); // Redesenhar a cena com nova rotação
+    }
+}
+
+void mouseClick(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON) {
+        if (state == GLUT_DOWN) {
+            mousePressed = true;
+            lastMouseX = x;
+            lastMouseY = y;
+        } else {
+            mousePressed = false;
+        }
+    }
+}
+
 
 int main(int argc, char **argv) {
 
 	
 // init GLUT and the windo
-	parseXML("../test files/test_files_phase_1/test_1_1.xml");
+	parseXML("../test files/test_files_phase_1/teste.xml");
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 	glutInitWindowPosition(100,100);
@@ -349,6 +397,8 @@ int main(int argc, char **argv) {
 	
 // put here the registration of the keyboard callbacks
 
+	glutMouseFunc(mouseClick);
+	glutMotionFunc(mouseMotion);
 
 
 //  OpenGL settings

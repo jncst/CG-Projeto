@@ -68,12 +68,8 @@ void generatePlane(float length, int divisions, const string& filename)
 	float subdiv = length / divisions;
 	float half = length / 2;		//usado para depois podermos centrar na origem
 
-	// Não sei o que ser este um
-	//file << 1 << "\n";
 	file << "PLANE\n";
-	file << "VERT "<<(divisions + 1) * (divisions + 1) << "\n";		//número de vértices no plano
-	// Tmb nao sei o que este 0
-	//file << 0 << "\n";		
+	file << "VERT "<<(divisions + 1) * (divisions + 1) << "\n";		//número de vértices no plano	
 	file << "SLICES " << divisions << "\n";
 
 	int i, j;
@@ -104,12 +100,11 @@ void generateBox(float length, int divisions, const std::string& filename)
 
     float subdiv = length / divisions;
     float half = length / 2; // Metade do comprimento para centralizar na origem
-    int totalVertices = (divisions + 1) * (divisions + 1);
+    int totalVertices = (divisions + 1) * (divisions + 1) * 6;
 
-	file << 6 << "\n";
-    file << totalVertices << "\n";
-	file << 0 << "\n";
-    file << divisions << "\n";
+	file << "BOX\n";
+	file << "VERT " << totalVertices << "\n";		//número de vértices no plano	
+	file << "SLICES " << divisions << "\n";
 
     int i, j;
     float x, y, z;
@@ -131,27 +126,27 @@ void generateBox(float length, int divisions, const std::string& filename)
                 case 1: // Plano inferior (y = -half)
                     x = half - j * subdiv;
                     y = -half;
-                    z = half - i * subdiv;
+                    z = -half + i * subdiv;
                     break;
                 case 2: // Plano frontal (z = half)
                     x = half - j * subdiv;
-                    y = half - i * subdiv;
+                    y = -half + i * subdiv;
                     z = half;
                     break;
                 case 3: // Plano traseiro (z = -half)
-                    x = half - j * subdiv;
-                    y = half - i * subdiv;
+                    x = -half + j * subdiv;
+                    y = -half + i * subdiv;
                     z = -half;
                     break;
                 case 4: // Plano esquerdo (x = -half)
                     x = -half;
-                    y = half - i * subdiv;
+                    y = -half + i * subdiv;
                     z = half - j * subdiv;
                     break;
                 case 5: // Plano direito (x = half)
                     x = half;
-                    y = half - i * subdiv;
-                    z = half - j * subdiv;
+                    y = -half + i * subdiv;
+                    z = -half + j * subdiv;
                     break;
                 }
                 file << x << " " << y << " " << z << "\n";

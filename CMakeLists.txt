@@ -5,6 +5,7 @@ PROJECT(engine)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+add_executable(generator src/gerador.cpp)
 add_executable(${PROJECT_NAME} src/engine.cpp src/parserXML.cpp)
 
 find_package(OpenGL REQUIRED)
