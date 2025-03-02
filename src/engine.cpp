@@ -425,8 +425,6 @@ void specialKeys(int key, int x, int y) {
     if (camera_radius < minRadius) camera_radius = minRadius;
     if (camera_radius > maxRadius) camera_radius = maxRadius;
 
-    std::cout << "Zoom level: " << camera_radius << std::endl;
-
     glutPostRedisplay(); // Refresh scene
 }
 
@@ -542,7 +540,7 @@ void renderScene(void)
 int main(int argc, char **argv)
 {
     // init GLUT and the windo
-        parseXML("../test files/test_files_phase_1/test_1_1.xml");
+        parseXML("../test files/test_files_phase_1/teste.xml");
 		cout << "x: " << camX << " y: " << camY << " z: " << camZ << "\n";
 		translateCameraPos();
         glutInit(&argc, argv);
