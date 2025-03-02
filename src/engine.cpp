@@ -24,6 +24,10 @@ float angleX = 0.0f, angleY = 0.0f;
 int lastMouseX, lastMouseY;
 bool mousePressed = false;
 
+float camera_radius = 6.0f; // Distância da câmara ao centro
+float minRadius = 0.1;
+float maxRadius = 15;
+
 
 
 // TESTING STUFF
@@ -82,6 +86,12 @@ int getNum(const string& line)
     return number;
 }
 
+void translateCameraPos()
+{
+	camera_radius = sqrt(camX * camX + camY * camY + camZ * camZ);
+	angleX = atan2(camZ, camX) * 180.0f / M_PI;
+	angleY = asin(camY / camera_radius) * 180.0f / M_PI;
+}
 
 
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
@@ -110,11 +120,6 @@ void AddPlane (string filepath)
 	{
 		getline (file, temp);
 		vertices.push_back(getVertice(temp));
-	}
-
-	for (int i = 0; i < num_vertices; i++)
-	{
-		vertices[i].display();
 	}
 
 	// Numero de quadrados que compõem o plano
@@ -337,13 +342,11 @@ void AddCone (string filepath)
 	{
 		if (i % num_slices == 0)
 		{
-			cout << "FIMMMMM\n";
 			desenhaTriangulo(vertices[i], vertices[i + num_slices], vertices [i + 1 - num_slices]);
 			desenhaTriangulo(vertices[i + 1], vertices [i + 1 - num_slices], vertices[i + num_slices]);
 		}
 		else
 		{
-			cout << "NORMAL\n";
 			desenhaTriangulo(vertices[i], vertices[i + num_slices], vertices [i + 1]);
 			desenhaTriangulo(vertices[i + 1], vertices[i + num_slices], vertices [i + num_slices + 1]);
 		}
@@ -408,6 +411,25 @@ void mouseClick(int button, int state, int x, int y) {
     }
 }
 
+void specialKeys(int key, int x, int y) {
+    if (key == GLUT_KEY_UP)
+	{   // Simulate scroll up
+        camera_radius -= 0.5f;
+    } 
+	else if (key == GLUT_KEY_DOWN)
+	{	// Simulate scroll down
+        camera_radius += 0.5f;
+    }
+
+    // Keep radius within limits
+    if (camera_radius < minRadius) camera_radius = minRadius;
+    if (camera_radius > maxRadius) camera_radius = maxRadius;
+
+    std::cout << "Zoom level: " << camera_radius << std::endl;
+
+    glutPostRedisplay(); // Refresh scene
+}
+
 //* CENAS DE INPUT /////////////////////////////////////////////////////////////////////
 
 
@@ -448,24 +470,15 @@ void renderScene(void)
 
 	glLoadIdentity();
 	
-	// Mover camera com rato
-	if (CAMERA_ACTIVE)
-	{
-		// Converter ângulos para radianos
-		float radX = angleX * M_PI / 180.0f;
-		float radY = angleY * M_PI / 180.0f;
-		
-		// Definir posição da câmara em torno do ponto (0,0,0)
-		float radius = 4.0f; // Distância da câmara ao centro
-		float camX = radius * cos(radX) * cos(radY);
-		float camY = radius * sin(radY);
-		float camZ = radius * sin(radX) * cos(radY);
-		gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
-	}
-	else
-	{
-		gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
-	}
+	// Converter ângulos para radianos
+	float radX = angleX * M_PI / 180.0f;
+	float radY = angleY * M_PI / 180.0f;
+	
+	// Definir posição da câmara em torno do ponto (0,0,0)
+	float camX = camera_radius * cos(radX) * cos(radY);
+	float camY = camera_radius * sin(radY);
+	float camZ = camera_radius * sin(radX) * cos(radY);
+	gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 
 	//* Set the camera
 
@@ -521,6 +534,7 @@ void renderScene(void)
 	glutSwapBuffers();
 }
 
+
 //* FUNCOES DO OPENGL /////////////////////////////////////////////////////////////////////
 
 
@@ -529,6 +543,8 @@ int main(int argc, char **argv)
 {
     // init GLUT and the windo
         parseXML("../test files/test_files_phase_1/test_1_1.xml");
+		cout << "x: " << camX << " y: " << camY << " z: " << camZ << "\n";
+		translateCameraPos();
         glutInit(&argc, argv);
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
         glutInitWindowPosition(100,100);
@@ -541,11 +557,12 @@ int main(int argc, char **argv)
         glutReshapeFunc(changeSize);
     
     // put here the registration of the keyboard callbacks
-		cout << "TESTE\n";
 		glutKeyboardFunc(keyboard);
 
 		glutMouseFunc(mouseClick);
     	glutMotionFunc(mouseMotion);
+
+		glutSpecialFunc(specialKeys);
 
     //  OpenGL settings
         glEnable(GL_CULL_FACE);         // Habilita o culling
