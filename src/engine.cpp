@@ -18,7 +18,7 @@ using namespace std;
 
 // Variáveis globais para controlar a rotação da câmara
 
-bool CAMERA_ACTIVE = true; // Mudar para true para conseguir usar rato para mover camera
+bool CAMERA_ACTIVE = false; // Mudar para true para conseguir usar rato para mover camera
 
 float angleX = 0.0f, angleY = 0.0f;
 int lastMouseX, lastMouseY;
@@ -534,18 +534,12 @@ void renderScene(void)
 	glutSwapBuffers();
 }
 
-
-//* FUNCOES DO OPENGL /////////////////////////////////////////////////////////////////////
-
-
-//* MAIN ///////////////////////////////////////////////////////////////////////////////
-int main(int argc, char **argv)
+void renderMain(string test_number)
 {
-    // init GLUT and the windo
-        parseXML("../test files/test_files_phase_1/test_1_1.xml");
+	    // init GLUT and the windo
+		parseXML(("../test files/test_files_phase_1/test_1_" + test_number + ".xml").c_str());
 		cout << "x: " << camX << " y: " << camY << " z: " << camZ << "\n";
 		translateCameraPos();
-        glutInit(&argc, argv);
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
         glutInitWindowPosition(100,100);
         glutInitWindowSize(width,height);
@@ -574,5 +568,29 @@ int main(int argc, char **argv)
     // enter GLUT's main cycle
         glutMainLoop();
         
-        return 1;
+}
+
+//* FUNCOES DO OPENGL /////////////////////////////////////////////////////////////////////
+
+
+//* MAIN ///////////////////////////////////////////////////////////////////////////////
+int main(int argc, char **argv)
+{
+	string line, test_number;
+	
+
+	glutInit(&argc, argv);
+    while (true)
+	{
+		getline(cin, line);
+		stringstream ss(line);
+	
+		ss >> test_number;
+
+		renderMain(test_number);
+
+		
+
+	}  
+	return 1;
 }
