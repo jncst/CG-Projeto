@@ -7,7 +7,7 @@
 
 // Definição das variáveis globais
 int width, height;
-float camX, camY, camZ;
+float initialCamX, initialCamY, initialCamZ;
 float lookAtX, lookAtY, lookAtZ;
 float upX, upY, upZ;
 float fov, near, far;
@@ -54,9 +54,9 @@ void parseXML(const char* filename) {
             std::string yStr = getAttributeValue(line, "y");
             std::string zStr = getAttributeValue(line, "z");
             
-            if (!xStr.empty()) camX = std::stof(xStr);
-            if (!yStr.empty()) camY = std::stof(yStr);
-            if (!zStr.empty()) camZ = std::stof(zStr);
+            if (!xStr.empty()) initialCamX = std::stof(xStr);
+            if (!yStr.empty()) initialCamY = std::stof(yStr);
+            if (!zStr.empty()) initialCamZ = std::stof(zStr);
         }
         
         // Camera lookAt

@@ -8,7 +8,7 @@ void parseXML(const char* filename);
 
 // Variables to store parsed data
 extern int width, height;
-extern float camX, camY, camZ;
+extern float initialCamX, initialCamY, initialCamZ;
 extern float lookAtX, lookAtY, lookAtZ;
 extern float upX, upY, upZ;
 extern float fov, near, far;
