@@ -1,7 +1,9 @@
+
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
 #include <cstdlib>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #endif
 
@@ -10,6 +12,7 @@
 #include <string>
 #include <sstream>
 #include <math.h>
+#include <vector>
 
 #include "parserXML.h"
 
@@ -35,6 +38,11 @@ float camZ;
 
 // TESTING STUFF
 int valor = 100; // valor para limitar numero de triangulos em funcoes para ajudar a vizualizar a contruçao do objeto
+
+
+// VBO STUFF
+vector <float> triangles;
+GLuint vbo;
 
 //* VARIÁVEIS /////////////////////////////////////////////////////////////////////
 
@@ -62,31 +70,61 @@ void translateCameraPos()
 
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
 
-void drawTriangle (string line)
+void loadTriangle (string line)
 {
 	float ax, ay, az, bx, by, bz, cx, cy, cz;
 	
 	stringstream ss(line);
     ss >> ax >> ay >> az >> bx >> by >> bz >> cx >> cy >> cz;
 
-	glBegin(GL_TRIANGLES);
+	triangles.push_back (ax);
+	triangles.push_back (ay);
+	triangles.push_back (az);
 
-		glVertex3d(ax, ay, az);
-		glVertex3d(bx, by, bz);
-		glVertex3d(cx, cy, cz);
+	triangles.push_back (bx);
+	triangles.push_back (by);
+	triangles.push_back (bz);
 
-	glEnd();
+	triangles.push_back (cx);
+	triangles.push_back (cy);
+	triangles.push_back (cz);
 }
 
-void drawObject (string model)
+void loadObject (string model)
 {
 	ifstream file("../generatorResults/" + model);
 
 	string line = "";
 	while (getline(file, line))
 	{
-		drawTriangle (line);
+		loadTriangle (line);
 	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * triangles.size(), triangles.data(), GL_STATIC_DRAW);
+}
+
+void drawTriangles ()
+{
+	int numVertices = triangles.size() / 3;
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+	GLint bufferSize;
+	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+
+	glVertexPointer(3, GL_FLOAT, 0, 0);
+
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glDisableClientState(GL_VERTEX_ARRAY);
+
+	glColor3f(1.0f, 1.0f, 1.0f);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
@@ -230,11 +268,8 @@ void renderScene(void)
     //* Desenha eixos x y z
 
 	drawAxis();
-	
-	for(string model : models)
-	{
-		drawObject (model);
-	}
+
+	drawTriangles();
 
 	// End of framesa
 	glutSwapBuffers();
@@ -256,7 +291,15 @@ void renderMain(string test_number)
         glutInitWindowPosition(300,300);
         glutInitWindowSize(width,height);
         glutCreateWindow("Projeto-CG@DI-UM");
+		
+		glewInit();
         
+		glGenBuffers(1, &vbo);
+
+		for(string model : models)
+		{
+			loadObject (model);
+		}
             
     // Required callback registry 
         glutDisplayFunc(renderScene);
@@ -284,14 +327,13 @@ int main(int argc, char **argv)
 	string line, test_number;
 
 	glutInit(&argc, argv);
-    while (true)
-	{
-		getline(cin, line);
-		stringstream ss(line);
 	
-		ss >> test_number;
+	getline(cin, line);
+	stringstream ss(line);
 
-		renderMain(test_number);
-	}  
+	ss >> test_number;
+
+	renderMain(test_number);
+
 	return 0;
 }
