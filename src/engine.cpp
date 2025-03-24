@@ -1,5 +1,6 @@
 
 #ifdef __APPLE__
+#include <GL/glew.h>
 #include <GLUT/glut.h>
 #else
 #include <cstdlib>
@@ -14,6 +15,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <vector>
+#include <map>
 
 #include "parserXML.h"
 
@@ -32,6 +34,10 @@ float minRadius = 1.0;
 float maxRadius = 300.0;
 float maxAngleY = 60.0;
 float minAngleY = -60.0;
+
+
+std::map<std::string, GLuint> loadedModels;
+
 
 float camX;
 float camY;
@@ -103,6 +109,7 @@ void loadObject (string model)
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * triangles.size(), triangles.data(), GL_STATIC_DRAW);
+	//triangles.clear();
 }
 
 void drawTriangles ()
@@ -126,6 +133,7 @@ void drawTriangles ()
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	triangles.clear();
 }
 
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
@@ -227,6 +235,7 @@ void drawAxis ()
 	glEnd();
 }
 
+
 void changeSize(int w, int h)
 {
 	// Prevent a divide by zero, when window is too short
@@ -252,27 +261,76 @@ void changeSize(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void renderScene(void) 
-{
 
+
+//Chandre todas as alterações ao teu codigo fora o parser, foram so o acréscimo desta função e a mudança da load objects para aqui, para além disso tive de por um triangles.clear() algures porque senao eram desenhadas figuras a mais. Ja nao me lembro exatamente o que causava isso mas sempre que um subgrupo novo era desenhado todas as figuras dos grupos anteriores também eram redesenhadas.Acho que havia um problema qualquer em que a loadObjects era chamada sem nada para desenhar e desenhava o grupo anterior.Entao eu fino como sou em vez de tentar corrigir esse problema simplesmente dei clear ao vetor triangulos depois de desenhar cada grupo, assim a loadobjects continua a ser chamda em branco mas desenha em branco tambem haha. Nao sei se esse problema entretanto foi resolvido porque isso tinha haver com o parser e com a maneira como eu armazenava as cenas e acedia a elas. Mas como ja alterei muito toda essa estrutura desde ai se calhar tambem resolveu isso.
+
+
+
+
+//A renderGroup basicamente pega na estrutura grupo e desenha todos os modelos com as transformações adequadas. Pelo que eu entendi do que e suposto fazer, que deve ser o certo visto que o nosso program devolve os resultados esperados, é que as transformações de um grupo devem ser aplicadas ao grupo e ao seus descendentes, ou seja, elas vao stackando. Se um grupo tem um translate de 1 para a direita e o seu filho tambem tem um translate de 1 para a direita o filho deve ser desenhado 2 para a direita. Toda essa logica de aplicar as translações so ao proprio grupo e aos descendentes e deita atraves do pushMatix e popMatrix. Man ja cansei de explicar
+
+void renderGroup(const Group& group) 
+{
+    
+    glPushMatrix();
+
+
+    for (const auto& transform : group.transformations) 
+	{
+        if (transform.type == "translate") 
+		{
+            glTranslatef(transform.x, transform.y, transform.z);
+        }
+        if (transform.type == "rotate") 
+		{
+            glRotatef(transform.angle, transform.x, transform.y, transform.z);
+        }
+        if (transform.type == "scale") 
+		{
+            glScalef(transform.x, transform.y, transform.z);
+        }
+    }
+
+    // Draw models in this group
+    for (const auto& model : group.models)
+	{
+        glPushMatrix();
+
+        loadObject(model.file);
+        drawTriangles();
+
+        glPopMatrix();
+    }
+
+    for (const auto& subgroup : group.subgroups) 
+	{
+        renderGroup(subgroup);
+    }
+
+    glPopMatrix();
+}
+
+
+
+void renderScene() 
+{
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	// clear buffers
+
+	// Clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-
+	glLoadIdentity();  // Reset transformations
 	translateCameraPos();
-	glLoadIdentity();
 	gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 
-	//* Set the camera
-
-    //* Desenha eixos x y z
-
+	//* Draw world axes
 	drawAxis();
+	
+	//Desenha o grupo, estrutura de dados que contem as transformacoes e os modelos
+	renderGroup(grupo);
 
-	drawTriangles();
-
-	// End of framesa
+	// End of frame
 	glutSwapBuffers();
 }
 
@@ -284,7 +342,7 @@ void renderScene(void)
 void renderMain(string test_number)
 {
 	    // init GLUT and the windo
-		parseXML(("../test files/test_files_phase_1/test_1_" + test_number + ".xml").c_str());
+		parseXML(("../test files/test_files_phase_2/test_2_" + test_number + ".xml").c_str());
 
 		translateInitialCameraPos();
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
@@ -297,11 +355,7 @@ void renderMain(string test_number)
         
 		glGenBuffers(1, &vbo);
 
-		for(string model : models)
-		{
-			loadObject (model);
-		}
-            
+
     // Required callback registry 
         glutDisplayFunc(renderScene);
         glutReshapeFunc(changeSize);
@@ -322,6 +376,8 @@ void renderMain(string test_number)
     // enter GLUT's main cycle
         glutMainLoop();  
 }
+
+
 
 int main(int argc, char **argv)
 {
