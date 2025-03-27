@@ -31,7 +31,7 @@ bool mousePressed = false;
 
 float camera_radius = 3.0; // Distância da câmara ao centro
 float minRadius = 1.0;
-float maxRadius = 300.0;
+float maxRadius = 10000;
 float maxAngleY = 60.0;
 float minAngleY = -60.0;
 
@@ -194,12 +194,12 @@ void specialKeys(int key, int x, int y)
 {
 	switch (key)
 	{
-		case GLUT_KEY_UP: camera_radius -= 0.5f;
+		case GLUT_KEY_UP: camera_radius -= 100.0f;
 			if (camera_radius < minRadius)
 				camera_radius = minRadius;
 			break;
 	
-		case GLUT_KEY_DOWN: camera_radius += 0.5f;
+		case GLUT_KEY_DOWN: camera_radius += 100.0f;
 			if (camera_radius > maxRadius)
 				camera_radius = maxRadius;
 			break;
