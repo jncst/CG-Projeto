@@ -153,7 +153,7 @@ def criaPlaneta (nome, distancia, diametro, angulo, grupo):
         angulo = 20
         alturaDonut = 0.1
         criaElemento("rotate", {"angle": angulo, "x": eixoRodarAsteroidesX, "y": eixoRodarAsteroidesY, "z": eixoRodarAsteroidesZ}, transform)
-        #criaElemento("scale", {"x": 1, "y": alturaDonut, "z": 1}, transform)
+        criaElemento("scale", {"x": 1, "y": alturaDonut, "z": 1}, transform)
 
         models = criaElemento("models", pai = subgrupo)
         criaElemento("model", {"file": f"anelsaturno.3d"}, models)
@@ -231,7 +231,6 @@ def geradorXml():
         models = criaElemento("models", pai = grupo)
         criaElemento("model", {"file": f"asteroide.3d"}, models)
         i += 1
-    
 
     return world
 

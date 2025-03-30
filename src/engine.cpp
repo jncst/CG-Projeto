@@ -263,15 +263,6 @@ void changeSize(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
-
-
-//Chandre todas as alterações ao teu codigo fora o parser, foram so o acréscimo desta função e a mudança da load objects para aqui, para além disso tive de por um triangles.clear() algures porque senao eram desenhadas figuras a mais. Ja nao me lembro exatamente o que causava isso mas sempre que um subgrupo novo era desenhado todas as figuras dos grupos anteriores também eram redesenhadas.Acho que havia um problema qualquer em que a loadObjects era chamada sem nada para desenhar e desenhava o grupo anterior.Entao eu fino como sou em vez de tentar corrigir esse problema simplesmente dei clear ao vetor triangulos depois de desenhar cada grupo, assim a loadobjects continua a ser chamda em branco mas desenha em branco tambem haha. Nao sei se esse problema entretanto foi resolvido porque isso tinha haver com o parser e com a maneira como eu armazenava as cenas e acedia a elas. Mas como ja alterei muito toda essa estrutura desde ai se calhar tambem resolveu isso.
-
-
-
-
-//A renderGroup basicamente pega na estrutura grupo e desenha todos os modelos com as transformações adequadas. Pelo que eu entendi do que e suposto fazer, que deve ser o certo visto que o nosso program devolve os resultados esperados, é que as transformações de um grupo devem ser aplicadas ao grupo e ao seus descendentes, ou seja, elas vao stackando. Se um grupo tem um translate de 1 para a direita e o seu filho tambem tem um translate de 1 para a direita o filho deve ser desenhado 2 para a direita. Toda essa logica de aplicar as translações so ao proprio grupo e aos descendentes e deita atraves do pushMatix e popMatrix. Man ja cansei de explicar
-
 void renderGroup(const Group& group) 
 {
     
