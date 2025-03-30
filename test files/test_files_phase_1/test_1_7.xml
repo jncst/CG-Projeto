@@ -8,7 +8,7 @@ teste<world>
     </camera>
 	<group> 
   		<models> 
-			<model file="cenas.3d" /> <!-- generator plane 2 3 plane_2_3.3d -->
+			<model file="torus.3d" /> <!-- generator plane 2 3 plane_2_3.3d -->
  		</models>
  	</group>
 </world>

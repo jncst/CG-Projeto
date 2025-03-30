@@ -340,6 +340,62 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
     }
 }
 
+void generateTorus(float insideRadius, float outsideRadius, int slices, int stacks, const std::string& filename)
+{
+    float anguloVertical = M_PI / stacks;
+    float anguloHorizontal = (2 * M_PI) / slices;
+
+    // Triangulos Centrais
+    // C      C         B
+    // +       +-------+
+    // |\       \      |
+    // | \       \     |
+    // |  \       \    |
+    // |   \       \   |
+    // |    \        \ |
+    // |_____\         |
+    // A      B         A
+
+    for (int i = 0; i < slices; i ++)
+    {
+        float startx = outsideRadius * sin(anguloHorizontal * i);
+        float startz = outsideRadius * cos(anguloHorizontal * i);
+
+        for (int j = 0; j < stacks * 2; j ++)
+        {
+            // Triangulo 1
+            float ax = outsideRadius * sin(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * i);
+            float ay = insideRadius * sin((-M_PI / 2) + anguloVertical * j);
+            float az = outsideRadius * cos(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * i);
+
+            float bx = outsideRadius * sin(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+            float by = insideRadius * sin((-M_PI / 2) + anguloVertical * j);
+            float bz = outsideRadius * cos(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+            float cx = outsideRadius * sin(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+            float cy = insideRadius * sin((-M_PI / 2) + anguloVertical * (j + 1));
+            float cz = outsideRadius * cos(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+           
+            writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            // Triangulo 2
+            ax = outsideRadius * sin(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+            ay = insideRadius * sin((-M_PI / 2) + anguloVertical * j);
+            az = outsideRadius * cos(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+            bx = outsideRadius * sin(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * (i + 1));
+            by = insideRadius * sin((-M_PI / 2) + anguloVertical * (j + 1));
+            bz = outsideRadius * cos(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * (i + 1));
+
+            cx = outsideRadius * sin(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+            cy = insideRadius * sin((-M_PI / 2) + anguloVertical * (j + 1));
+            cz = outsideRadius * cos(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+            
+            writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
     for (int i = 1; i < 7; i ++)
@@ -363,17 +419,23 @@ int main(int argc, char* argv[])
         generateBox(stof(argv [2]),stoi(argv [3]),argv [4]);
         cout << "Box generated\n";
     }
+    else if (string(argv[1]) == "sphere")
+    {
+        cleanFile (argv [5]);
+        generateSphere(stof(argv [2]), stoi(argv [3]), stoi(argv [4]), argv [5]);
+        cout << "Sphere generated\n";
+    }
     else if (string(argv[1]) == "cone")
     {
         cleanFile (argv [6]);
         generateCone(stof(argv [2]),stof(argv [3]),stoi(argv [4]),stoi(argv [5]), argv [6]);
         cout << "Cone generated\n";
     }
-    else if (string(argv[1]) == "sphere")
+    else if (string(argv[1]) == "torus")
     {
-        cleanFile (argv [5]);
-        generateSphere(stof(argv [2]), stoi(argv [3]), stoi(argv [4]), argv [5]);
-        cout << "Sphere generated\n";
+        cleanFile (argv [6]);
+        generateTorus(stof(argv [2]), stof(argv [3]), stof(argv [4]), stoi(argv [5]), argv [6]);
+        cout << "Torus generated\n";
     }
     else
     {

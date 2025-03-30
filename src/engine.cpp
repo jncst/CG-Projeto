@@ -16,10 +16,12 @@
 #include <math.h>
 #include <vector>
 #include <map>
+#include <filesystem>
 
 #include "parserXML.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 //* VARIÁVEIS /////////////////////////////////////////////////////////////////////
 
@@ -36,7 +38,7 @@ float maxAngleY = 60.0;
 float minAngleY = -60.0;
 
 
-std::map<std::string, GLuint> loadedModels;
+map<string, GLuint> loadedModels;
 
 
 float camX;
@@ -339,10 +341,10 @@ void renderScene()
 
 //* MAIN ///////////////////////////////////////////////////////////////////////////////
 
-void renderMain(string test_number)
+void renderMain(string file)
 {
 	    // init GLUT and the windo
-		parseXML(("../test files/test_files_phase_2/test_2_" + test_number + ".xml").c_str());
+		parseXML((file).c_str());
 
 		translateInitialCameraPos();
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
@@ -378,6 +380,31 @@ void renderMain(string test_number)
 }
 
 
+// Cenas de ler os ficheiros de teste
+void listDirectory(const fs::path& currentPath, vector<fs::directory_entry>& items)
+{
+    items.clear();
+    int index = 1;
+
+    for (const auto& entry : fs::directory_iterator(currentPath))
+	{
+        items.push_back(entry);
+        cout << index++ << ". " << entry.path().filename().string() << "\n";
+    }
+}
+
+string readFile(const fs::path& filePath)
+{
+    ifstream file(filePath);
+
+    if (!file)
+	{
+        cerr << "Erro ao abrir o ficheiro!\n";
+        return "";
+    }
+    return filePath;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -385,12 +412,48 @@ int main(int argc, char **argv)
 
 	glutInit(&argc, argv);
 	
-	getline(cin, line);
-	stringstream ss(line);
+	fs::path currentPath = "../test files";
+    vector<fs::directory_entry> items;
+    int choice;
+	string fileContent;
 
-	ss >> test_number;
+	while (true)
+	{
+		listDirectory(currentPath, items);
+        
+		cout << "\nEscolhe um número (0 para sair): ";
+		cin >> choice;
 
-	renderMain(test_number);
+        if (choice == 0)
+		{
+			break;
+		}
+        if (choice < 1 || choice > items.size())
+		{
+            cout << "Escolha inválida!\n";
+            continue;
+        }
+        
+        fs::directory_entry selected = items[choice - 1];
+
+        if (fs::is_directory(selected))
+		{
+            currentPath = selected.path(); // Entra no diretório
+        } 
+		else if (fs::is_regular_file(selected))
+		{
+            fileContent = readFile(selected.path());
+			break;
+        }
+		else
+		{
+            cout << "Item inválido!\n";
+        }
+    }
+
+	cout << fileContent;
+
+	renderMain(fileContent);
 
 	return 0;
 }
