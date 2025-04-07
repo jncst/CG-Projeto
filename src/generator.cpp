@@ -5,9 +5,73 @@
 #include <cmath>
 #include <vector>
 #include <sstream>
+#include <array>
 
 using namespace std;
 
+
+//============================ BEZIER PATCHES ============================
+struct Point
+{
+    float x, y, z;
+};
+
+vector <array<int, 16>> patches;         // cada patch tem 16 índices
+vector <Point> controlPoints;
+
+
+void readPatchFile(const string& filename, vector <array<int, 16>>& patches, vector <Point>& controlPoints)
+{
+    ifstream file(filename);        // ifstream é para leitura
+
+    if (!file.is_open())
+    {
+        cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
+
+    string line;
+    int numpatches;
+    array <int, 16> patch;
+    int numcontrol;
+
+    getline(file, line);
+    numpatches = stoi(line);        // número de patches
+
+        // linhas com os índices dos patches
+    for (int i = 0; i < numpatches; i++)
+    {
+        getline(file, line);
+        stringstream ss(line);              // para extrair valores facilmente
+
+        for (int j = 0; j < 16; j++)        // 16 índices por patch
+        {
+            string index;
+            getline(ss, index, ',');        // ler até à vírgula
+            patch[j] = stoi(index);         // pegar no índice e converter para número
+        }
+
+        patches.push_back(patch);           // guarda no vetor criado em cima
+    }   
+
+        // número de pontos de controlo
+    getline(file, line);
+    numcontrol = stoi(line);
+
+        // linhas com os pontos de controlo
+    for (int i = 0; i < numcontrol; i++)
+    {
+        getline(file, line);
+        stringstream ss(line);
+
+        Point p;
+        char comma;                     // só para consumir as vírgulas
+
+        ss >> p.x >> comma >> p.y >> comma >> p.z;
+        controlPoints.push_back(p);     // armazenar o ponto
+    }
+}
+//============================ BEZIER PATCHES ============================
 void cleanFile (const string& filename)
 {
     // Limpa o ficheiro 
