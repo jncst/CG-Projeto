@@ -19,6 +19,7 @@ struct Point
 vector <array<int, 16>> patches;         // cada patch tem 16 índices
 vector <Point> controlPoints;
 
+        //==== LEITURA ====
 
 void readPatchFile(const string& filename, vector <array<int, 16>>& patches, vector <Point>& controlPoints)
 {
@@ -70,8 +71,120 @@ void readPatchFile(const string& filename, vector <array<int, 16>>& patches, vec
         ss >> p.x >> comma >> p.y >> comma >> p.z;
         controlPoints.push_back(p);     // armazenar o ponto
     }
+
+    file.close();
 }
-//============================ BEZIER PATCHES ============================
+
+    //===| LEITURA |===
+
+
+float bernstein(int i, float t)             //Bi(t) = 3Ci * (1-t)^(3-i) * t^i
+{
+    switch (i)
+    {
+        case 0: return (1 - t) * (1 - t) * (1 - t);
+        case 1: return 3 * t * (1 - t) * (1 - t);
+        case 2: return 3 * t * t * (1 - t);
+        case 3: return t * t * t;
+
+        default: return 0;
+    }
+}
+
+
+Point calculaBezier(float u, float v, Point grelha[4][4])       //u e v em [0,1]
+{
+    Point p = { 0.0f, 0.0f, 0.0f };
+    float bu, bv;
+
+    for (int i = 0; i < 4; i++)
+    {
+        bu = bernstein(i, u);
+
+        for (int j = 0; j < 4; j++)
+        {
+            bv = bernstein(i, v);
+
+            p.x += grelha[i][j].x * bu * bv;
+            p.y += grelha[i][j].y * bu * bv;
+            p.z += grelha[i][j].z * bu * bv;
+        }
+    }
+
+    return p;
+}
+
+
+void tessellatePatch(Point grelha[4][4], vector<Point>& pontosFinais, int tessellationLevel)       //escreve nos pontos finais a partir da grelha de pontos de controlo
+{
+    float step = 1.0f / tessellationLevel;          // nível da tesselation (o valor que incrementa u e v)
+
+    for (int i = 0; i < tessellationLevel; ++i)
+    {
+
+        float u = i * step;
+        float uNext = (i + 1) * step;
+
+        for (int j = 0; j < tessellationLevel; ++j)
+        {
+            float v = j * step;
+            float vNext = (j + 1) * step;
+
+                // Calcular os 4 pontos do quadrado atual
+            Point p1 = calculaBezier(u, v, grelha);
+            Point p2 = calculaBezier(uNext, v, grelha);
+            Point p3 = calculaBezier(u, vNext, grelha);
+            Point p4 = calculaBezier(uNext, vNext, grelha);
+
+                // Triângulo 1: p1, p2, p3
+            pontosFinais.push_back(p1);
+            pontosFinais.push_back(p2);
+            pontosFinais.push_back(p3);
+
+                // Triângulo 2: p2, p4, p3
+            pontosFinais.push_back(p2);
+            pontosFinais.push_back(p4);
+            pontosFinais.push_back(p3);
+        }
+    }
+}
+
+void generateBezier(const std::string& filenameIN, int tessellationLevel, const std::string& filenameOUT)     //função principal para os patches bezier ->     | generator patch teapot.patch 10 bezier_10.3d |
+{
+        // leitura do ficheiro
+    readPatchFile(filenameIN, patches, controlPoints);
+
+        // podemos meter o vetor de pontos finais fora que vai armazenar todas as patches aqui
+    vector<Point> pontosFinais;
+
+        // para cada patch, armazenamos os pontos de controlo numa grelha 4x4
+    for (const auto& patch : patches)
+    {
+        Point grelha[4][4];
+
+            // preenchimento da grelha
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+                grelha[i][j] = controlPoints[patch[i * 4 + j]];
+        }
+
+            // tesselação do patch
+        tessellatePatch(grelha, pontosFinais, tessellationLevel);          //tenho os triângulos de um patch
+    }
+
+        // escrita dos pontos no ficheiro
+    int size = pontosFinais.size();         //tamanho do array para iterar
+
+    for (int i = 0; i < size;)
+    {
+        writeTriangle(filenameOUT, pontosFinais[i].x, pontosFinais[i].y, pontosFinais[i++].z,
+                                   pontosFinais[i].x, pontosFinais[i].y, pontosFinais[i++].z,
+                                   pontosFinais[i].x, pontosFinais[i].y, pontosFinais[i++].z);
+    }
+}
+
+//===========================| BEZIER PATCHES |===========================
 void cleanFile (const string& filename)
 {
     // Limpa o ficheiro 
@@ -500,6 +613,12 @@ int main(int argc, char* argv[])
         cleanFile (argv [6]);
         generateTorus(stof(argv [2]), stof(argv [3]), stof(argv [4]), stoi(argv [5]), argv [6]);
         cout << "Torus generated\n";
+    }
+    else if (string(argv[1]) == "patch")
+    {
+        cleanFile(argv [4]);
+        generateBezier(argv [2], stoi(argv [3]), argv [4]);
+        cout << "Bezier Surface generated\n";
     }
     else
     {
