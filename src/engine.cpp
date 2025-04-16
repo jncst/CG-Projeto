@@ -384,17 +384,17 @@ void listDirectory(const fs::path& currentPath, vector<fs::directory_entry>& ite
     }
 }
 
-string readFile(const fs::path& filePath)
-{
-    ifstream file(filePath);
-
-    if (!file)
-	{
-        cerr << "Erro ao abrir o ficheiro!\n";
-        return "";
-    }
-    return filePath;
-}
+//string readFile(const fs::path& filePath)
+//{
+//    ifstream file(filePath);
+//
+//    if (!file)
+//	{
+//        cerr << "Erro ao abrir o ficheiro!\n";
+//        return "";
+//    }
+//    return filePath;
+//}
 
 
 int main(int argc, char **argv)
@@ -406,43 +406,43 @@ int main(int argc, char **argv)
 	fs::path currentPath = "../test files";
     vector<fs::directory_entry> items;
     int choice;
-	string fileContent;
+	string fileContent = "../test files/test_files_phase_2/test_2_5";
 
-	while (true)
-	{
-		listDirectory(currentPath, items);
-        
-		cout << "\nEscolhe um número (0 para sair): ";
-		cin >> choice;
+	//while (true)
+	//{
+	//	listDirectory(currentPath, items);
+ //       
+	//	cout << "\nEscolhe um número (0 para sair): ";
+	//	cin >> choice;
 
-        if (choice == 0)
-		{
-			break;
-		}
-        if (choice < 1 || choice > items.size())
-		{
-            cout << "Escolha inválida!\n";
-            continue;
-        }
-        
-        fs::directory_entry selected = items[choice - 1];
+ //       if (choice == 0)
+	//	{
+	//		break;
+	//	}
+ //       if (choice < 1 || choice > items.size())
+	//	{
+ //           cout << "Escolha inválida!\n";
+ //           continue;
+ //       }
+ //       
+ //       fs::directory_entry selected = items[choice - 1];
 
-        if (fs::is_directory(selected))
-		{
-            currentPath = selected.path(); // Entra no diretório
-        } 
-		else if (fs::is_regular_file(selected))
-		{
-            fileContent = readFile(selected.path());
-			break;
-        }
-		else
-		{
-            cout << "Item inválido!\n";
-        }
-    }
+ //       if (fs::is_directory(selected))
+	//	{
+ //           currentPath = selected.path(); // Entra no diretório
+ //       } 
+	//	else if (fs::is_regular_file(selected))
+	//	{
+ //           fileContent = readFile(selected.path());
+	//		break;
+ //       }
+	//	else
+	//	{
+ //           cout << "Item inválido!\n";
+ //       }
+ //   }
 
-	cout << fileContent;
+	//cout << fileContent;
 
 	renderMain(fileContent);
 

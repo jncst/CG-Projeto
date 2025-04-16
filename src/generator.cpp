@@ -10,6 +10,31 @@
 using namespace std;
 
 
+void cleanFile(const string& filename)
+{
+    // Limpa o ficheiro 
+    ofstream file("../generatorResults/" + filename);		//abre o ficheiro para escrita
+    if (!file)
+    {
+        cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
+}
+
+void writeTriangle(const string& filename, float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz)
+{
+    ofstream file("../generatorResults/" + filename, ios::app);		//abre o ficheiro para escrita
+    if (!file)
+    {
+        cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
+
+    file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << "\n";
+}
+
+
+
 //============================ BEZIER PATCHES ============================
 struct Point
 {
@@ -185,28 +210,6 @@ void generateBezier(const std::string& filenameIN, int tessellationLevel, const 
 }
 
 //===========================| BEZIER PATCHES |===========================
-void cleanFile (const string& filename)
-{
-    // Limpa o ficheiro 
-    ofstream file ("../generatorResults/" + filename);		//abre o ficheiro para escrita
-	if (!file)
-	{
-		cerr << "Erro ao abrir o ficheiro.\n";
-		return;
-	}
-}
-
-void writeTriangle (const string& filename, float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz)
-{
-    ofstream file ("../generatorResults/" + filename, ios::app);		//abre o ficheiro para escrita
-	if (!file)
-	{
-		cerr << "Erro ao abrir o ficheiro.\n";
-		return;
-	}
-
-    file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << "\n";
-}
 
 // É TUDO COUNTER CLOCK WISE
 

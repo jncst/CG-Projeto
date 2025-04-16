@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.11)
 PROJECT(engine)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(generator src/generator.cpp)
 add_executable(${PROJECT_NAME} src/engine.cpp src/parserXML.cpp)
