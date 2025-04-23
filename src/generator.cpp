@@ -128,7 +128,7 @@ Point calculaBezier(float u, float v, Point grelha[4][4])       //u e v em [0,1]
 
         for (int j = 0; j < 4; j++)
         {
-            bv = bernstein(i, v);
+            bv = bernstein(j, v);
 
             p.x += grelha[i][j].x * bu * bv;
             p.y += grelha[i][j].y * bu * bv;
@@ -201,11 +201,15 @@ void generateBezier(const std::string& filenameIN, int tessellationLevel, const 
         // escrita dos pontos no ficheiro
     int size = pontosFinais.size();         //tamanho do array para iterar
 
-    for (int i = 0; i < size;)
+    for (int i = 0; i < size; i += 3)
     {
-        writeTriangle(filenameOUT, pontosFinais[i].x, pontosFinais[i].y, pontosFinais[i++].z,
-                                   pontosFinais[i].x, pontosFinais[i].y, pontosFinais[i++].z,
-                                   pontosFinais[i].x, pontosFinais[i].y, pontosFinais[i++].z);
+        auto& A = pontosFinais[i + 0];          //o auto deduz o tipo dos pontos, é tipo python, mas podia escrever Point
+        auto& B = pontosFinais[i + 1];          //o & faz uma referência ao item, em vez de o clonar, caso fizesse sem
+        auto& C = pontosFinais[i + 2];
+
+        writeTriangle(filenameOUT, A.x, A.y, A.z,
+                                   B.x, B.y, B.z,
+                                   C.x, C.y, C.z);
     }
 }
 
