@@ -23,7 +23,8 @@ static int getInt(XMLElement* e, const char* attr, int def = 0) {
     return val;
 }
 
-void parseGroup(XMLElement* xmlGroup, Group& group) {
+void parseGroup(XMLElement* xmlGroup, Group& group)
+{
     for (XMLElement* elem = xmlGroup->FirstChildElement(); elem; elem = elem->NextSiblingElement()) {
         std::string tag = elem->Value();
 

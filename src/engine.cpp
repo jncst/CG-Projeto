@@ -337,6 +337,10 @@ void renderMain(string file)
 	    // init GLUT and the windo
 		parseXML((file).c_str());
 
+		std::cout << "Numero de transformações: " << grupo.transformations.size() << std::endl;
+		std::cout << "Numero de modelos: " << grupo.models.size() << std::endl;								//estas 3 linhas para debug
+		std::cout << "Numero de subgrupos: " << grupo.subgroups.size() << std::endl;
+
 		translateInitialCameraPos();
         glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 
@@ -364,7 +368,7 @@ void renderMain(string file)
     //  OpenGL settings
         glEnable(GL_CULL_FACE);         // Habilita o culling
         glCullFace(GL_BACK);            
-        // glEnable(GL_DEPTH_TEST);
+        glEnable(GL_DEPTH_TEST);		// potencialmente comentar esta linha
         
     // enter GLUT's main cycle
         glutMainLoop();  
@@ -393,7 +397,10 @@ string readFile(const fs::path& filePath)
        cerr << "Erro ao abrir o ficheiro!\n";
        return "";
    }
-   return filePath;
+
+   stringstream buffer;
+   buffer << file.rdbuf(); // lê todo o conteúdo para o buffer
+   return buffer.str();    // devolve como string
 }
 
 

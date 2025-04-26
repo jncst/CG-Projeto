@@ -12,9 +12,20 @@ extern float lookAtX, lookAtY, lookAtZ;
 extern float upX, upY, upZ;
 extern float fov, near, far;
 
-struct Transformation {
+
+struct Point
+{
+    float x, y, z;
+};
+
+struct Transformation
+{
     std::string type; // "translate", "rotate", "scale"
     float x, y, z, angle;
+
+    float time;
+    bool align = false;
+    std::vector<Point> points;
 };
 
 struct Model {
