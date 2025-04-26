@@ -128,7 +128,7 @@ Point calculaBezier(float u, float v, Point grelha[4][4])       //u e v em [0,1]
 
         for (int j = 0; j < 4; j++)
         {
-            bv = bernstein(i, v);
+            bv = bernstein(j, v);
 
             p.x += grelha[i][j].x * bu * bv;
             p.y += grelha[i][j].y * bu * bv;

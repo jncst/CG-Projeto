@@ -32,15 +32,20 @@ if(WIN32)
 		message(ERROR ": GLEW not found")
 	endif (NOT EXISTS "${TOOLKITS_FOLDER}/glew/GL/glew.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/glew/glew32.lib")	
 
+	if(NOT EXISTS "${TOOLKITS_FOLDER}/tinyxml2/tinyxml2.h" OR NOT EXISTS "${TOOLKITS_FOLDER}/tinyxml2/tinyxml2.lib")
+        message(ERROR ": TinyXML2 not found in ${TOOLKITS_FOLDER}/tinyxml2")
+    endif()
 	
-	include_directories(${TOOLKITS_FOLDER}/glut ${TOOLKITS_FOLDER}/glew)
+	include_directories(${TOOLKITS_FOLDER}/glut ${TOOLKITS_FOLDER}/glew ${TOOLKITS_FOLDER}/tinyxml2)
 	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} 
 										  ${TOOLKITS_FOLDER}/glut/glut32.lib 
-										  ${TOOLKITS_FOLDER}/glew/glew32.lib )
+										  ${TOOLKITS_FOLDER}/glew/glew32.lib
+										  ${TOOLKITS_FOLDER}/tinyxml2/tinyxml2.lib )
 	
-	if (EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll"  AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")
+	if (EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll"  AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll" AND EXISTS "${TOOLKITS_FOLDER}tinyxml2/tinyxml2.dll")
 		file(COPY ${TOOLKITS_FOLDER}/glut/glut32.dll DESTINATION ${CMAKE_BINARY_DIR})
 		file(COPY ${TOOLKITS_FOLDER}/glew/glew32.dll DESTINATION ${CMAKE_BINARY_DIR})
+		file(COPY ${TOOLKITS_FOLDER}/tinyxml2/tinyxml2.dll DESTINATION ${CMAKE_BINARY_DIR})
 	endif(EXISTS "${TOOLKITS_FOLDER}/glut/glut32.dll"  AND EXISTS "${TOOLKITS_FOLDER}/glew/glew32.dll")	
 	
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
@@ -54,6 +59,13 @@ else(WIN32) # Linux and Mac
 	include_directories(${GLUT_INCLUDE_DIR})
 	link_directories(${GLUT_LIBRARY_DIRS})
 	add_definitions(${GLUT_DEFINITIONS})
+
+	# find_package(TinyXML2 REQUIRED)
+	find_package(PkgConfig REQUIRED)
+    pkg_check_modules(TINYXML2 REQUIRED tinyxml2)
+	include_directories(${TINYXML2_INCLUDE_DIRS})      # TINYXML2
+    link_directories(${TINYXML2_LIBRARY_DIRS})        # TINYXML2
+    target_link_libraries(${PROJECT_NAME} ${TINYXML2_LIBRARIES})
 	
 	if (NOT APPLE)
 		find_package(GLEW REQUIRED)
@@ -64,10 +76,10 @@ else(WIN32) # Linux and Mac
 		target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
 	endif(NOT APPLE)
 
-	target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
-	if(NOT GLUT_FOUND)
-	   message(ERROR ": GLUT not found!")
-	endif(NOT GLUT_FOUND)
+	# target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
+	# if(NOT GLUT_FOUND)
+	#    message(ERROR ": GLUT not found!")
+	# endif(NOT GLUT_FOUND)
 
     
 endif(WIN32)
