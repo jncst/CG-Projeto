@@ -25,9 +25,9 @@ terraDiametro = 7.926
 terraAngulo = 45
 
 # Lua
-luaDistancia = 1200
+luaDistancia = 1200000
 luaDiametro = 2.1
-luaAngulo = 85
+luaAngulo = 20
 
 # Marte
 marteDistancia = 141500
@@ -62,13 +62,13 @@ plutaoAngulo = 11320
 # Cintura Asteroides
 cinturaAsteroidesDistanciaMin = 204430
 cinturaAsteroidesDistanciaMax = 297450
-cinturaAsteroidesNumAsteroides = 10     # 1000
+cinturaAsteroidesNumAsteroides = 500     # 1000
 cinturaAsteroidesDiametro = 0.005
 
 # Cintura de Kuiper
 cinturaKuiperDistanciaMin = 2790000
 cinturaKuiperDistanciaMax = 4650000
-cinturaKuiperNumAsteroides = 10     # 10000
+cinturaKuiperNumAsteroides = 5000     # 10000
 cinturaKuiperDiametro = 0.005
 
 
@@ -76,7 +76,6 @@ planetas = [
         ("Mercurio", mercurioDistancia, mercurioDiametro, mercurioAngulo),
         ("Venus", venusDistancia, venusDiametro, venusAngulo),
         ("Terra", terraDistancia, terraDiametro, terraAngulo),
-        #("Lua", luaDistancia, luaDiametro, luaAngulo),
         ("Marte", marteDistancia, marteDiametro, marteAngulo),
         ("Jupiter", jupiterDistancia, jupiterDiametro, jupiterAngulo),
         ("Saturno", saturnoDistancia, saturnoDiametro, saturnoAngulo),
@@ -171,16 +170,16 @@ def criaPlaneta (nome, distancia, diametro, angulo, grupo):
         subgrupo = criaElemento("group", pai=grupo)             # lua
         transform = criaElemento("transform", pai=subgrupo)
 
-        criaElemento("rotate", {"time": angulo, "x": eixoRodarPlanetasX, "y": eixoRodarPlanetasY, "z": eixoRodarPlanetasZ}, transform)
+        criaElemento("rotate", {"time": luaAngulo, "x": eixoRodarPlanetasX, "y": eixoRodarPlanetasY, "z": eixoRodarPlanetasZ}, transform)
     
         # Depois o planeta é transladado para a distância correta
-        criaElemento("translate", {"x": (luaDistancia), "y": 0, "z": 0}, transform)
+        criaElemento("translate", {"x": (luaDistancia / distancia), "y": 0, "z": 0}, transform)
 
         # Roda o próprio planeta no eixo (ex: rotação própria)
         criaElemento("rotate", {"time": 1.0, "x": eixoRodarPlanetasX, "y": eixoRodarPlanetasY, "z": eixoRodarPlanetasZ}, transform)
 
         # Escalado para o tamanho certo
-        criaElemento("scale", {"x": luaDiametro * escalaPlanetas, "y": luaDiametro * escalaPlanetas, "z": luaDiametro * escalaPlanetas}, transform)
+        criaElemento("scale", {"x": luaDiametro / diametro , "y": luaDiametro / diametro , "z": luaDiametro / diametro }, transform)
 
         models = criaElemento("models", pai=subgrupo)
         criaElemento("model", {"file": f"planet.3d"}, models)
