@@ -41,6 +41,11 @@ float minAngleY = -60.0;
 map<string, GLuint> loadedModels;
 
 
+// Animation stuff
+float TESSELATION = 0.01;
+
+
+
 float camX;
 float camY;
 float camZ;
@@ -265,16 +270,20 @@ void changeSize(int w, int h)
 
 void renderGroup(const Group& group) 
 {
-    
     glPushMatrix();
-
 
     for (const auto& transform : group.transformations) 
 	{
         if (transform.type == "translate") 
 		{
             glTranslatef(transform.x, transform.y, transform.z);
-        }
+        } 
+		if (transform.type == "translate-time")
+		{
+	
+		}
+
+		// SE FOR TRANSLATE TIME METEMOS AQUI NO IF E ELE VAI DAR TRANSLATE CONSOANTE O TEMPO
         if (transform.type == "rotate") 
 		{
             glRotatef(transform.angle, transform.x, transform.y, transform.z);
@@ -303,8 +312,6 @@ void renderGroup(const Group& group)
 
     glPopMatrix();
 }
-
-
 
 void renderScene() 
 {
@@ -394,67 +401,12 @@ string readFile(const fs::path& filePath)
 
    if (!file)
 	{
-       cerr << "Erro ao abrir o ficheiro!\n";
-       return "";
-   }
+    	cerr << "Erro ao abrir o ficheiro!\n";
+    	return "";
+   	}
 
-   stringstream buffer;
-   buffer << file.rdbuf(); // lê todo o conteúdo para o buffer
-   return buffer.str();    // devolve como string
+   return filePath.string();
 }
-
-
-// int main(int argc, char **argv)
-// {
-// 	string line, test_number;
-
-// 	glutInit(&argc, argv);
-	
-// 	fs::path currentPath = "../test files";
-//     vector<fs::directory_entry> items;
-//     int choice;
-// 	string fileContent = "../test files/test_files_phase_2/test_2_5";
-
-// 	//while (true)
-// 	//{
-// 	//	listDirectory(currentPath, items);
-//  //       
-// 	//	cout << "\nEscolhe um número (0 para sair): ";
-// 	//	cin >> choice;
-
-//  //       if (choice == 0)
-// 	//	{
-// 	//		break;
-// 	//	}
-//  //       if (choice < 1 || choice > items.size())
-// 	//	{
-//  //           cout << "Escolha inválida!\n";
-//  //           continue;
-//  //       }
-//  //       
-//  //       fs::directory_entry selected = items[choice - 1];
-
-//  //       if (fs::is_directory(selected))
-// 	//	{
-//  //           currentPath = selected.path(); // Entra no diretório
-//  //       } 
-// 	//	else if (fs::is_regular_file(selected))
-// 	//	{
-//  //           fileContent = readFile(selected.path());
-// 	//		break;
-//  //       }
-// 	//	else
-// 	//	{
-//  //           cout << "Item inválido!\n";
-//  //       }
-//  //   }
-
-// 	//cout << fileContent;
-
-// 	renderMain(fileContent);
-
-// 	return 0;
-// }
 
 int main(int argc, char **argv)
 {

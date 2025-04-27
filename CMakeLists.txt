@@ -12,8 +12,9 @@ add_executable(generator src/generator.cpp)
 add_executable(${PROJECT_NAME} 
     src/engine.cpp 
     src/parserXML.cpp
-    ${TOOLKITS_FOLDER}/tinyxml2/tinyxml2.cpp  # <--- adicionamos o tinyxml2.cpp aqui
+    # ${TOOLKITS_FOLDER}/tinyxml2/tinyxml2.cpp  # <--- adicionamos o tinyxml2.cpp aqui
 )
+
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})

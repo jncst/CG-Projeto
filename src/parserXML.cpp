@@ -48,6 +48,7 @@ void parseGroup(XMLElement* xmlGroup, Group& group)
             // If has animation time, collect time, align and points
             if (elem->Attribute("time")) {
                 t.time = getFloat(elem, "time");
+                t.type = "translate-time";
 
                 const char* alignAttr = elem->Attribute("align");
                 t.align = (alignAttr && std::string(alignAttr) == "true");
