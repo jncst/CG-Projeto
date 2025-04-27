@@ -163,13 +163,13 @@ void tessellatePatch(Point grelha[4][4], vector<Point>& pontosFinais, int tessel
 
                 // Triângulo 1: p1, p2, p3
             pontosFinais.push_back(p1);
-            pontosFinais.push_back(p2);
             pontosFinais.push_back(p3);
+            pontosFinais.push_back(p2);
 
                 // Triângulo 2: p2, p4, p3
             pontosFinais.push_back(p2);
-            pontosFinais.push_back(p4);
             pontosFinais.push_back(p3);
+            pontosFinais.push_back(p4);
         }
     }
 }
@@ -203,13 +203,14 @@ void generateBezier(const std::string& filenameIN, int tessellationLevel, const 
 
     for (int i = 0; i < size; i += 3)
     {
-        auto& A = pontosFinais[i + 0];          //o auto deduz o tipo dos pontos, é tipo python, mas podia escrever Point
-        auto& B = pontosFinais[i + 1];          //o & faz uma referência ao item, em vez de o clonar, caso fizesse sem
+
+        auto& A = pontosFinais[i];
+        auto& B = pontosFinais[i + 1];
         auto& C = pontosFinais[i + 2];
 
         writeTriangle(filenameOUT, A.x, A.y, A.z,
-                                   B.x, B.y, B.z,
-                                   C.x, C.y, C.z);
+                                B.x, B.y, B.z,
+                                C.x, C.y, C.z);
     }
 }
 
