@@ -152,8 +152,13 @@ void parseXML(const char* filename) {
         }
     }
 
-    if (XMLElement* groupXML = root->FirstChildElement("group")) {
-        grupo = Group();
-        parseGroup(groupXML, grupo);
+    for (XMLElement* elem = root->FirstChildElement(); elem; elem = elem->NextSiblingElement())
+    {
+        if (std::string(elem->Value()) == "group")
+        {
+            Group subGroup;
+            parseGroup(elem, subGroup);
+            grupo.subgroups.push_back(subGroup);
+        }
     }
 }
