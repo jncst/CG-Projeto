@@ -74,6 +74,11 @@ void parseGroup(XMLElement* xmlGroup, Group& group)
             t.time = elem->Attribute("time") ? getFloat(elem, "time") : 0.0f;
             t.align = false;
             t.points.clear();
+
+            if (elem->Attribute("time"))
+            {
+                t.type = "rotate-time";
+            }
             group.transformations.push_back(t);
         }
         else if (tag == "scale") {

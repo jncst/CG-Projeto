@@ -37,6 +37,8 @@ float maxRadius = 10000;
 float maxAngleY = 60.0;
 float minAngleY = -60.0;
 
+float zoom = 0.5f;
+
 
 map<string, GLuint> loadedModels;
 
@@ -143,6 +145,136 @@ void drawTriangles ()
 	triangles.clear();
 }
 
+void buildRotMatrix(float *x, float *y, float *z, float *m) {
+
+	m[0] = x[0]; m[1] = x[1]; m[2] = x[2]; m[3] = 0;
+	m[4] = y[0]; m[5] = y[1]; m[6] = y[2]; m[7] = 0;
+	m[8] = z[0]; m[9] = z[1]; m[10] = z[2]; m[11] = 0;
+	m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
+}
+
+
+void cross(float *a, float *b, float *res) {
+
+	res[0] = a[1]*b[2] - a[2]*b[1];
+	res[1] = a[2]*b[0] - a[0]*b[2];
+	res[2] = a[0]*b[1] - a[1]*b[0];
+}
+
+void normalize(float *a) {
+
+	float l = sqrt(a[0]*a[0] + a[1] * a[1] + a[2] * a[2]);
+	a[0] = a[0]/l;
+	a[1] = a[1]/l;
+	a[2] = a[2]/l;
+}
+
+
+float length(float *v) {
+
+	float res = sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+	return res;
+
+}
+
+void multMatrixVector(float *m, float *v, float *res) {
+
+	for (int j = 0; j < 4; ++j) {
+		res[j] = 0;
+		for (int k = 0; k < 4; ++k) {
+			res[j] += v[k] * m[j * 4 + k];
+		}
+	}
+
+}
+
+void getCatmullRomPoint(float t, Point p0, Point p1, Point p2, Point p3, float *pos, float *deriv) {
+
+    // catmull-rom matrix
+    float m[4][4] = {    {-0.5f,  1.5f, -1.5f,  0.5f},
+                        { 1.0f, -2.5f,  2.0f, -0.5f},
+                        {-0.5f,  0.0f,  0.5f,  0.0f},
+                        { 0.0f,  1.0f,  0.0f,  0.0f}};
+            
+    // Compute A = M * P
+    // 
+        // Matriz de pontos de controlo
+    float Px[4] = { p0.x, p1.x, p2.x, p3.x };    //for each component i: // x, y, z. In component i, P is the vector (p0[i], p1[i], p2[i],p3[i])
+    float Py[4] = { p0.y, p1.y, p2.y, p3.y };
+    float Pz[4] = { p0.z, p1.z, p2.z, p3.z };
+
+    float Ax[4], Ay[4], Az[4];
+    multMatrixVector((float *) m, Px, Ax);            // Resultado armazenado em A
+    multMatrixVector((float *) m, Py, Ay);
+    multMatrixVector((float *) m, Pz, Az);
+
+    // Compute pos[i] = T * A
+
+        // O vetor T = [t^3 t^2 t 1]    -> Vamos usar o valor t passado na função
+    float T[4] = { powf(t,3), powf(t,2), t, 1 };
+
+    pos[0] = T[0] * Ax[0] + T[1] * Ax[1] + T[2] * Ax[2] + T[3] * Ax[3];        //a multmatrixvector não deixa chamar os indices de pos por isso vai ter que ser assim
+    pos[1] = T[0] * Ay[0] + T[1] * Ay[1] + T[2] * Ay[2] + T[3] * Ay[3];
+    pos[2] = T[0] * Az[0] + T[1] * Az[1] + T[2] * Az[2] + T[3] * Az[3];
+    
+    // compute deriv[i] = T' * A
+
+        // O vetor T' = [3t^2 2t 1 0]    -> Vamos usar o valor t passado na função
+    float Tderiv[4] = { 3 * powf(t,2), 2* t, 1, 0 };
+
+    deriv[0] = Tderiv[0] * Ax[0] + Tderiv[1] * Ax[1] + Tderiv[2] * Ax[2] + Tderiv[3] * Ax[3];
+    deriv[1] = Tderiv[0] * Ay[0] + Tderiv[1] * Ay[1] + Tderiv[2] * Ay[2] + Tderiv[3] * Ay[3];
+    deriv[2] = Tderiv[0] * Az[0] + Tderiv[1] * Az[1] + Tderiv[2] * Az[2] + Tderiv[3] * Az[3];
+    // ...
+}
+
+void getCatmullGlobalRomPoint(float gt, float *pos, float *deriv, vector<Point> points) {
+
+	int num_points = points.size();
+	float t = gt * num_points; // this is the real global t
+	int index = floor(t);  // which segment
+	t = t - index; // where within  the segment
+
+	// indices store the points
+	int indices[4]; 
+	indices[0] = (index + num_points-1)%num_points;	
+	indices[1] = (indices[0]+1)%num_points;
+	indices[2] = (indices[1]+1)%num_points; 
+	indices[3] = (indices[2]+1)%num_points;
+
+	getCatmullRomPoint(t, points[indices[0]], points[indices[1]], points[indices[2]], points[indices[3]], pos, deriv);
+}
+
+void renderCatmullRomCurve(vector <Point> points)
+{
+	// draw curve using line segments with GL_LINE_LOOP
+	float pos [3];
+	float deriv [3];
+	float gt;
+
+	glBegin(GL_LINE_LOOP);
+	glColor3f (0, 0, 0);
+	for (gt = 0; gt < 1; gt += TESSELATION)
+	{
+		getCatmullGlobalRomPoint(gt, pos, deriv, points);
+		glVertex3f(pos[0], pos[1], pos[2]);
+	}
+	glColor3f (1, 1, 1);
+	glEnd();
+
+	glBegin(GL_LINES);
+	glColor3f (0.7, 0.7, 0.7);
+	for (gt = 0; gt < 1; gt += TESSELATION)
+	{
+		getCatmullGlobalRomPoint(gt, pos, deriv, points);
+		glVertex3f(pos[0], pos[1], pos[2]);
+		normalize(deriv);
+		glVertex3f(pos[0] + deriv [0], pos[1] + deriv [1], pos[2] + deriv [2]);
+	}
+	glColor3f (1, 1, 1);
+	glEnd();
+}
+
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
 
 //* CENAS DE INPUT /////////////////////////////////////////////////////////////////////
@@ -201,12 +333,12 @@ void specialKeys(int key, int x, int y)
 {
 	switch (key)
 	{
-		case GLUT_KEY_UP: camera_radius -= 100.0f;
+		case GLUT_KEY_UP: camera_radius -= zoom;
 			if (camera_radius < minRadius)
 				camera_radius = minRadius;
 			break;
 	
-		case GLUT_KEY_DOWN: camera_radius += 100.0f;
+		case GLUT_KEY_DOWN: camera_radius += zoom;
 			if (camera_radius > maxRadius)
 				camera_radius = maxRadius;
 			break;
@@ -268,7 +400,7 @@ void changeSize(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void renderGroup(const Group& group) 
+void renderGroup(const Group& group, float elapsed_time) 
 {
     glPushMatrix();
 
@@ -280,7 +412,37 @@ void renderGroup(const Group& group)
         } 
 		if (transform.type == "translate-time")
 		{
-	
+			float pos [3];
+			float deriv [3];
+			vector<Point> points = transform.points;
+
+			renderCatmullRomCurve (points);
+			
+			float t = fmod(elapsed_time / transform.time, 1.0f);
+
+			getCatmullGlobalRomPoint(t, pos, deriv, points);
+
+			glTranslatef(pos[0], pos[1], pos[2]);
+
+			if (transform.align)
+			{
+				float m [16];
+				float Y [3] = {0 , 1 , 0};
+			
+				float x [3] = {deriv[0], deriv[1] , deriv [2]};
+				normalize(x);
+			
+				float z [3];
+				cross(x, Y, z);
+				normalize(z);
+			
+				cross(z, x, Y);
+				normalize(Y);
+			
+				buildRotMatrix(x, Y, z, m);
+			
+				glMultMatrixf(m);
+			}
 		}
 
 		// SE FOR TRANSLATE TIME METEMOS AQUI NO IF E ELE VAI DAR TRANSLATE CONSOANTE O TEMPO
@@ -288,6 +450,11 @@ void renderGroup(const Group& group)
 		{
             glRotatef(transform.angle, transform.x, transform.y, transform.z);
         }
+		if (transform.type == "rotate-time")
+		{
+			float angle = fmod((elapsed_time / transform.time) * 360.0f, 360.0f);
+			glRotatef(angle, transform.x, transform.y, transform.z); 
+		}
         if (transform.type == "scale") 
 		{
             glScalef(transform.x, transform.y, transform.z);
@@ -307,7 +474,7 @@ void renderGroup(const Group& group)
 
     for (const auto& subgroup : group.subgroups) 
 	{
-        renderGroup(subgroup);
+        renderGroup(subgroup, elapsed_time);
     }
 
     glPopMatrix();
@@ -315,6 +482,9 @@ void renderGroup(const Group& group)
 
 void renderScene() 
 {
+	float elapsedMs = glutGet(GLUT_ELAPSED_TIME);
+    float elapsed  = elapsedMs / 1000.0f;
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// Clear buffers
@@ -328,7 +498,7 @@ void renderScene()
 	drawAxis();
 	
 	//Desenha o grupo, estrutura de dados que contem as transformacoes e os modelos
-	renderGroup(grupo);
+	renderGroup(grupo, elapsed);
 
 	// End of frame
 	glutSwapBuffers();
@@ -362,6 +532,7 @@ void renderMain(string file)
 
     // Required callback registry 
         glutDisplayFunc(renderScene);
+		glutIdleFunc(renderScene);
         glutReshapeFunc(changeSize);
     
     // put here the registration of the keyboard callbacks
