@@ -42,7 +42,22 @@ void writeNormals(const string& filename, float ax, float ay, float az, float bx
         return;
     }
 
-    file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << "\n";
+    file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << " normals\n";
+}
+
+void normalize(float &x, float &y, float &z)
+{
+    float length = sqrt(x * x + y * y + z * z);
+
+    if (length == 0.0f)
+    {
+        // Evita divisão por zero, mas deixa o vetor como está
+        return;
+    }
+
+    x /= length;
+    y /= length;
+    z /= length;
 }
 
 
@@ -300,6 +315,10 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
            
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         
 
@@ -317,6 +336,10 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
             cz = startZ + (i * addHorizontalZ) + ((j + 1) * addVerticalZ);
             
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         }
@@ -360,8 +383,26 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
         float cx = radius * cos((-M_PI / 2) + anguloVertical) * sin(anguloHorizontal * i);
         float cy = radius * sin((-M_PI / 2) + anguloVertical);
         float cz = radius * cos((-M_PI / 2) + anguloVertical) * cos(anguloHorizontal * i);
-
+        
         writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+        float n1x = 0;
+        float n1y = -1;
+        float n1z = 0;
+
+        float n2x = cos((-M_PI / 2) + anguloVertical) * sin(anguloHorizontal * (i + 1));
+        float n2y = sin((-M_PI / 2) + anguloVertical);
+        float n2z = cos((-M_PI / 2) + anguloVertical) * cos(anguloHorizontal * (i + 1));
+
+        float n3x = cos((-M_PI / 2) + anguloVertical) * sin(anguloHorizontal * i);
+        float n3y = sin((-M_PI / 2) + anguloVertical);
+        float n3z = cos((-M_PI / 2) + anguloVertical) * cos(anguloHorizontal * i);
+
+        normalize(n1x, n1y, n1z);
+        normalize(n2x, n2y, n2z);
+        normalize(n3x, n3y, n3z);
+
+        writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
     }
 
 
@@ -395,6 +436,24 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
            
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
+            float n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * i);
+            float n1y = sin((-M_PI / 2) + anguloVertical * j);
+            float n1z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * i);
+
+            float n2x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+            float n2y = sin((-M_PI / 2) + anguloVertical * j);
+            float n2z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+            float n3x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+            float n3y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+            float n3z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
             // Triangulo 2
             ax = radius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
             ay = radius * sin((-M_PI / 2) + anguloVertical * j);
@@ -409,6 +468,24 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
             cz = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
             
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+            n1y = sin((-M_PI / 2) + anguloVertical * j);
+            n1z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+            n2x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * (i + 1));
+            n2y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+            n2z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * (i + 1));
+
+            n3x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+            n3y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+            n3z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         }
     }
     
@@ -436,6 +513,24 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
         float cz = radius * cos((M_PI / 2) - anguloVertical) * cos(anguloHorizontal * (i + 1));
 
         writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+        float n1x = 0;
+        float n1y = 1;
+        float n1z = 0;
+
+        float n2x = cos((M_PI / 2) - anguloVertical) * sin(anguloHorizontal * i);
+        float n2y = sin((M_PI / 2) - anguloVertical);
+        float n2z = cos((M_PI / 2) - anguloVertical) * cos(anguloHorizontal * i);
+
+        float n3x = cos((M_PI / 2) - anguloVertical) * sin(anguloHorizontal * (i + 1));
+        float n3y = sin((M_PI / 2) - anguloVertical);
+        float n3z = cos((M_PI / 2) - anguloVertical) * cos(anguloHorizontal * (i + 1));
+
+        normalize(n1x, n1y, n1z);
+        normalize(n2x, n2y, n2z);
+        normalize(n3x, n3y, n3z);
+
+        writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
     }
 }
 
@@ -470,6 +565,24 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
         float cz = radius * cos(anguloHorizontal * i);
 
         writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+        float n1x = 0;
+        float n1y = -1;
+        float n1z = 0;
+
+        float n2x = sin(anguloHorizontal * (i + 1));
+        float n2y = 0;
+        float n2z = cos(anguloHorizontal * (i + 1));
+
+        float n3x = sin(anguloHorizontal * i);
+        float n3y = 0;
+        float n3z = cos(anguloHorizontal * i);
+
+        normalize(n1x, n1y, n1z);
+        normalize(n2x, n2y, n2z);
+        normalize(n3x, n3y, n3z);
+
+        writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
     }
 
 
@@ -507,6 +620,25 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
            
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
+            float n1x = stackRadius * sin(anguloHorizontal * i);
+            float n1y = thisStackHeight;
+            float n1z = stackRadius * cos(anguloHorizontal * i);
+
+            float n2x = stackRadius * sin(anguloHorizontal * (i + 1));
+            float n2y = thisStackHeight;
+            float n2z = stackRadius * cos(anguloHorizontal * (i + 1));
+
+            float n3x = stackAboveRadius * sin(anguloHorizontal * i);
+            float n3y = thisStackHeight + stackHeight;
+            float n3z = stackAboveRadius * cos(anguloHorizontal * i);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+            
+
             // Triangulo 2
             ax = stackRadius * sin(anguloHorizontal * (i + 1));
             ay = thisStackHeight;
@@ -521,6 +653,24 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
             cz = stackAboveRadius * cos(anguloHorizontal * i);
 
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            n1x = stackRadius * sin(anguloHorizontal * (i + 1));
+            n1y = thisStackHeight;
+            n1z = stackRadius * cos(anguloHorizontal * (i + 1));
+
+            n2x = stackAboveRadius * sin(anguloHorizontal * (i + 1));
+            n2y = thisStackHeight + stackHeight;
+            n2z = stackAboveRadius * cos(anguloHorizontal * (i + 1));
+
+            n3x = stackAboveRadius * sin(anguloHorizontal * i);
+            n3y = thisStackHeight + stackHeight;
+            n3z = stackAboveRadius * cos(anguloHorizontal * i);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         }
     }
     
@@ -551,6 +701,24 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
         float cz = stackRadius * cos(anguloHorizontal * (i + 1));
 
         writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+        float n1x = 0;
+        float n1y = 1;
+        float n1z = 0;
+
+        float n2x = stackRadius * sin(anguloHorizontal * i);
+        float n2y = height - stackHeight;
+        float n2z = stackRadius * cos(anguloHorizontal * i);
+
+        float n3x = stackRadius * sin(anguloHorizontal * (i + 1));
+        float n3y = height - stackHeight;
+        float n3z = stackRadius * cos(anguloHorizontal * (i + 1));
+
+        normalize(n1x, n1y, n1z);
+        normalize(n2x, n2y, n2z);
+        normalize(n3x, n3y, n3z);
+
+        writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
     }
 }
 
