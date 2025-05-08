@@ -31,7 +31,7 @@
 		<group> 
 			<transform> 
 				<scale x="0.2" y="0.2" z="0.2" />
-				<translate x = "2.5" y = "2.0" z = "-2.5" />
+				<translate x = "2.5" y = "1.1" z = "-2.5" />
 			</transform>
 			<models> 
 				<model file="box_2_3.3d" > <!-- generator 2 3 box_2_3.3d -->
@@ -49,12 +49,30 @@
 		<group> 
 			<transform> 
 				<scale x="0.2" y="0.2" z="0.2" />
-				<translate x = "-2.5" y = "2.0" z = "-2.5" />
+				<translate x = "-2.5" y = "1.1" z = "-2.5" />
 			</transform>
 			<models> 
-				<model file="sphere_2_30_30.3d" > <!-- generator 2 3 box_2_3.3d -->
+				<model file="sphere_1_30_30.3d" > <!-- generator 2 3 box_2_3.3d -->
 					<color>
                     <diffuse R="200" G="200" B="000" />
+                    <ambient R="50" G="50" B="00" />
+                    <specular R="0" G="0" B="0" />
+                    <emissive R="255" G="0" B="0" />
+                    <shininess value="0" />
+                </color>
+				</model>
+			</models>
+		</group>
+>
+		<group> 
+			<transform> 
+				<scale x="0.2" y="0.2" z="0.2" />
+				<translate x = "-2.5" y = "0.1" z = "2.5" />
+			</transform>
+			<models> 
+				<model file="cone_1_2_30_5.3d" > <!-- generator 2 3 box_2_3.3d -->
+					<color>
+                    <diffuse R="100" G="200" B="000" />
                     <ambient R="50" G="50" B="00" />
                     <specular R="0" G="0" B="0" />
                     <emissive R="255" G="0" B="0" />

@@ -549,6 +549,8 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
     //       \ | /
     //        \|/
     //         A
+
+    float normalY = height / sqrt ( height * height + radius * radius  );
     
     for (int i = 0; i < slices; i ++)
     {
@@ -621,15 +623,15 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
             float n1x = stackRadius * sin(anguloHorizontal * i);
-            float n1y = thisStackHeight;
+            float n1y = normalY;
             float n1z = stackRadius * cos(anguloHorizontal * i);
 
             float n2x = stackRadius * sin(anguloHorizontal * (i + 1));
-            float n2y = thisStackHeight;
+            float n2y = normalY;
             float n2z = stackRadius * cos(anguloHorizontal * (i + 1));
 
             float n3x = stackAboveRadius * sin(anguloHorizontal * i);
-            float n3y = thisStackHeight + stackHeight;
+            float n3y = normalY;
             float n3z = stackAboveRadius * cos(anguloHorizontal * i);
 
             normalize(n1x, n1y, n1z);
@@ -655,15 +657,15 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
             n1x = stackRadius * sin(anguloHorizontal * (i + 1));
-            n1y = thisStackHeight;
+            n1y = normalY;
             n1z = stackRadius * cos(anguloHorizontal * (i + 1));
 
             n2x = stackAboveRadius * sin(anguloHorizontal * (i + 1));
-            n2y = thisStackHeight + stackHeight;
+            n2y = normalY;
             n2z = stackAboveRadius * cos(anguloHorizontal * (i + 1));
 
             n3x = stackAboveRadius * sin(anguloHorizontal * i);
-            n3y = thisStackHeight + stackHeight;
+            n3y = normalY;
             n3z = stackAboveRadius * cos(anguloHorizontal * i);
 
             normalize(n1x, n1y, n1z);
