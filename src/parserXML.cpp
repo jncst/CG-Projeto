@@ -10,6 +10,7 @@ float lookAtX, lookAtY, lookAtZ;
 float upX = 0, upY = 1, upZ = 0;
 float fov = 60, near = 1, far = 1000;
 Group grupo;
+std::vector<Light> lights;
 
 static float getFloat(XMLElement* e, const char* attr, float def = 0.0f) {
     float val = def;
@@ -81,7 +82,8 @@ void parseGroup(XMLElement* xmlGroup, Group& group)
             }
             group.transformations.push_back(t);
         }
-        else if (tag == "scale") {
+        else if (tag == "scale")
+        {
             Transformation t;
             t.type = "scale";
             t.x = getFloat(elem, "x");
@@ -93,14 +95,47 @@ void parseGroup(XMLElement* xmlGroup, Group& group)
             t.points.clear();
             group.transformations.push_back(t);
         }
-        else if (tag == "models") {
-            for (XMLElement* modelElem = elem->FirstChildElement("model"); modelElem; modelElem = modelElem->NextSiblingElement("model")) {
+        else if (tag == "models")
+        {
+            for (XMLElement* modelElem = elem->FirstChildElement("model"); modelElem; modelElem = modelElem->NextSiblingElement("model"))
+            {
                 Model m;
                 if (const char* file = modelElem->Attribute("file"))
-                    m.file = file;
+                m.file = file;
+                
+                if (XMLElement* texElem = modelElem->FirstChildElement("texture"))
+                {
+                    m.texture = texElem->Attribute("file");
+                }
+
+                if (XMLElement* colorElem = modelElem->FirstChildElement("color"))  
+                {  
+                    auto readRGB = [&](const char* tag, float out[4])  
+                    {  
+                        if (XMLElement* c = colorElem->FirstChildElement(tag))  
+                        {  
+                            float R = getFloat(c, "R") / 255.0f;  
+                            float G = getFloat(c, "G") / 255.0f;  
+                            float B = getFloat(c, "B") / 255.0f;  
+                            out[0] = R; out[1] = G; out[2] = B; out[3] = 1.0f;  
+                        }  
+                    };  
+
+                    readRGB("diffuse", m.material.diffuse);  
+                    readRGB("ambient", m.material.ambient);  
+                    readRGB("specular", m.material.specular);  
+                    readRGB("emissive", m.material.emissive);  
+
+                    if (XMLElement* s = colorElem->FirstChildElement("shininess"))  
+                    {  
+                        m.material.shininess = getFloat(s, "value");  
+                    }  
+                }  
+
                 group.models.push_back(m);
             }
         }
+
         else if (tag == "group") {
             Group subgroup;
             parseGroup(elem, subgroup);
@@ -124,10 +159,14 @@ void parseXML(const char* filename) {
         return;
     }
 
+    // PARSE INFO DA JANELA
+
     if (XMLElement* window = root->FirstChildElement("window")) {
         width = getInt(window, "width");
         height = getInt(window, "height");
     }
+
+    // PARSE INFO DA CAMERA
 
     if (XMLElement* camera = root->FirstChildElement("camera")) {
         if (XMLElement* pos = camera->FirstChildElement("position")) {
@@ -149,6 +188,43 @@ void parseXML(const char* filename) {
             fov = getFloat(proj, "fov");
             near = getFloat(proj, "near");
             far = getFloat(proj, "far");
+        }
+    }
+
+    // PARSE INFO DAS LUZES
+
+    if (XMLElement* lightsElem = root->FirstChildElement("lights"))
+    {
+        for (XMLElement* lightElem = lightsElem->FirstChildElement("light"); lightElem; lightElem = lightElem->NextSiblingElement("light"))
+        {
+            Light L;
+            L.type = lightElem->Attribute("type");
+            
+            if (L.type == "point" || L.type == "spot")  
+            {  
+                L.x = getFloat(lightElem, "posx");  
+                L.y = getFloat(lightElem, "posy");  
+                L.z = getFloat(lightElem, "posz");  
+            }  
+            if (L.type == "directional" || L.type == "spot")  
+            {  
+                L.dirX = getFloat(lightElem, "dirx");  
+                L.dirY = getFloat(lightElem, "diry");  
+                L.dirZ = getFloat(lightElem, "dirz");  
+            }  
+            if (L.type == "spot")  
+            {  
+                L.x = getFloat(lightElem, "posx");  
+                L.y = getFloat(lightElem, "posy");  
+                L.z = getFloat(lightElem, "posz");  
+
+                L.dirX = getFloat(lightElem, "dirx");  
+                L.dirY = getFloat(lightElem, "diry");  
+                L.dirZ = getFloat(lightElem, "dirz");  
+
+                L.cutoff = getFloat(lightElem, "cutoff");  
+            }  
+            lights.push_back(L);  
         }
     }
 

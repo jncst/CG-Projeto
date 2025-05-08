@@ -114,6 +114,11 @@ void loadObject (string model)
 	while (getline(file, line))
 	{
 		loadTriangle (line);
+		// getline(file, line);
+		// loadNormal (line);
+		// getline(file, line);
+		// loadTexturePoints (line);
+
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -124,7 +129,6 @@ void loadObject (string model)
 void drawTriangles ()
 {
 	int numVertices = triangles.size() / 3;
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glColor3f(1.0f, 1.0f, 1.0f);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -141,7 +145,6 @@ void drawTriangles ()
 	glDisableClientState(GL_VERTEX_ARRAY);
 
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	triangles.clear();
 }
 
@@ -466,6 +469,12 @@ void renderGroup(const Group& group, float elapsed_time)
 	{
         glPushMatrix();
 
+		glMaterialfv(GL_FRONT, GL_DIFFUSE,   model.material.diffuse);  
+		glMaterialfv(GL_FRONT, GL_AMBIENT,   model.material.ambient);  
+		glMaterialfv(GL_FRONT, GL_SPECULAR,  model.material.specular);  
+		glMaterialfv(GL_FRONT, GL_EMISSION,  model.material.emissive);  
+		glMaterialf (GL_FRONT, GL_SHININESS, model.material.shininess);  
+
         loadObject(model.file);
         drawTriangles();
 
@@ -482,20 +491,51 @@ void renderGroup(const Group& group, float elapsed_time)
 
 void renderScene() 
 {
-	float elapsedMs = glutGet(GLUT_ELAPSED_TIME);
-    float elapsed  = elapsedMs / 1000.0f;
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	// Clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	glLoadIdentity();  // Reset transformations
+
+	glLoadIdentity();
+
 	translateCameraPos();
 	gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 
-	//* Draw world axes
-	drawAxis();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	// exemplo de luz
+	// float pos[4] = {1.0, 1.0, 1.0, 0.0};
+	// glLightfv(GL_LIGHT0, GL_POSITION, pos);
+
+	for (size_t i = 0; i < lights.size() && i < 8; ++i)
+	{
+		auto &L = lights[i];
+		GLenum LE = GL_LIGHT0 + i;
+
+		// w = 0 para directional, w = 1 para point/spot
+		GLfloat pos[4] = {
+			L.x,
+			L.y,
+			L.z,
+			(L.type == "directional") ? 0.0f : 1.0f
+		};
+		glLightfv(LE, GL_POSITION, pos);
+
+		if (L.type == "spot")
+		{
+			GLfloat dir[3] = {
+				L.dirX,
+				L.dirY,
+				L.dirZ
+			};
+			glLightfv(LE, GL_SPOT_DIRECTION, dir);
+			glLightf(LE, GL_SPOT_CUTOFF, L.cutoff);
+		}
+	}
+
+	glDisable(GL_LIGHTING);
+    drawAxis();
+    glEnable(GL_LIGHTING);
+
+	float elapsedMs = glutGet(GLUT_ELAPSED_TIME);
+    float elapsed  = elapsedMs / 1000.0f;
 	
 	//Desenha o grupo, estrutura de dados que contem as transformacoes e os modelos
 	renderGroup(grupo, elapsed);
@@ -511,23 +551,56 @@ void renderScene()
 
 void renderMain(string file)
 {
-	    // init GLUT and the windo
-		parseXML((file).c_str());
+	// init GLUT and the windo
+	parseXML((file).c_str());
 
-		std::cout << "Numero de transformações: " << grupo.transformations.size() << std::endl;
-		std::cout << "Numero de modelos: " << grupo.models.size() << std::endl;								//estas 3 linhas para debug
-		std::cout << "Numero de subgrupos: " << grupo.subgroups.size() << std::endl;
+	std::cout << "Numero de transformações: " << grupo.transformations.size() << std::endl;
+	std::cout << "Numero de modelos: " << grupo.models.size() << std::endl;								//estas 3 linhas para debug
+	std::cout << "Numero de subgrupos: " << grupo.subgroups.size() << std::endl;
 
-		translateInitialCameraPos();
-        glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
+	translateInitialCameraPos();
+	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
 
-        glutInitWindowPosition(300,300);
-        glutInitWindowSize(width,height);
-        glutCreateWindow("Projeto-CG@DI-UM");
-		
-		glewInit();
-        
-		glGenBuffers(1, &vbo);
+	glutInitWindowPosition(300,300);
+	glutInitWindowSize(width,height);
+	glutCreateWindow("Projeto-CG@DI-UM");
+	
+	glewInit();
+	
+	glGenBuffers(1, &vbo);
+
+	// cenas de luzes ig
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	float dark[4] = {0.2, 0.2, 0.2, 1.0};
+	float white[4] = {1.0, 1.0, 1.0, 1.0};
+	float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+	for (size_t i = 0; i < lights.size() && i < 8; ++i)
+	{
+		GLenum LE = GL_LIGHT0 + i;
+
+		glEnable(LE);
+
+		// light colors
+		GLfloat diff[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		GLfloat amb [4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+		GLfloat spec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+		glLightfv(LE, GL_AMBIENT, dark);
+		glLightfv(LE, GL_DIFFUSE, white);
+		glLightfv(LE, GL_SPECULAR, white);
+	}
+
+	// // light colors
+	// glLightfv(GL_LIGHT0, GL_AMBIENT, dark);
+	// glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
+	// glLightfv(GL_LIGHT0, GL_SPECULAR, white);
+
+	// controls global ambient light
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
 
 
     // Required callback registry 

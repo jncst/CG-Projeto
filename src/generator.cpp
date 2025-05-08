@@ -33,6 +33,18 @@ void writeTriangle(const string& filename, float ax, float ay, float az, float b
     file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << "\n";
 }
 
+void writeNormals(const string& filename, float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz)
+{
+    ofstream file("../generatorResults/" + filename, ios::app);		//abre o ficheiro para escrita
+    if (!file)
+    {
+        cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
+
+    file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << "\n";
+}
+
 
 
 //============================ BEZIER PATCHES ============================
