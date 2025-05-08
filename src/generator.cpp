@@ -256,6 +256,19 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
     // cout << "addh: (" << addHorizontalX << ", " << addHorizontalY << ", " << addHorizontalZ << ")" << "\n";
     // cout << "addv: (" << addVerticalX << ", " << addVerticalY << ", " << addVerticalZ << ")" << "\n";
 
+    float n1x = x;
+    float n1y = y;
+    float n1z = z;
+
+    float n2x = x;
+    float n2y = y;
+    float n2z = z;
+
+    float n3x = x;
+    float n3y = y;
+    float n3z = z;
+
+
     // Loop que varia o x
     for (int i = 0; i < divisions; i ++)
     {
@@ -286,6 +299,8 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
             float cz = startZ + (i * addHorizontalZ) + ((j + 1) * addVerticalZ);
            
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         
 
             // Triangulo 2
@@ -302,6 +317,8 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
             cz = startZ + (i * addHorizontalZ) + ((j + 1) * addVerticalZ);
             
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         }
     }
 }

@@ -58,7 +58,8 @@ int valor = 100; // valor para limitar numero de triangulos em funcoes para ajud
 
 // VBO STUFF
 vector <float> triangles;
-GLuint vbo;
+vector <float> normals;
+GLuint vbo, vbo_normals;
 
 //* VARIÁVEIS /////////////////////////////////////////////////////////////////////
 
@@ -106,6 +107,26 @@ void loadTriangle (string line)
 	triangles.push_back (cz);
 }
 
+void loadNormals (string line)
+{
+	float ax, ay, az, bx, by, bz, cx, cy, cz;
+	
+	stringstream ss(line);
+    ss >> ax >> ay >> az >> bx >> by >> bz >> cx >> cy >> cz;
+
+	normals.push_back (ax);
+	normals.push_back (ay);
+	normals.push_back (az);
+
+	normals.push_back (bx);
+	normals.push_back (by);
+	normals.push_back (bz);
+
+	normals.push_back (cx);
+	normals.push_back (cy);
+	normals.push_back (cz);
+}
+
 void loadObject (string model)
 {
 	ifstream file("../generatorResults/" + model);
@@ -114,8 +135,8 @@ void loadObject (string model)
 	while (getline(file, line))
 	{
 		loadTriangle (line);
-		// getline(file, line);
-		// loadNormal (line);
+		getline(file, line);
+		loadNormals (line);
 		// getline(file, line);
 		// loadTexturePoints (line);
 
@@ -123,29 +144,37 @@ void loadObject (string model)
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * triangles.size(), triangles.data(), GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size(), normals.data(), GL_STATIC_DRAW);
+
 	//triangles.clear();
 }
 
 void drawTriangles ()
 {
 	int numVertices = triangles.size() / 3;
-	glColor3f(1.0f, 1.0f, 1.0f);
 
+	
+	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-	GLint bufferSize;
-	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
-
 	glVertexPointer(3, GL_FLOAT, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
+	glNormalPointer(GL_FLOAT, 0, 0);
+	
+	// GLint bufferSize;
+	// glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+	
 
 	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
 
-	glColor3f(1.0f, 1.0f, 1.0f);
 	triangles.clear();
+	normals.clear();
 }
 
 void buildRotMatrix(float *x, float *y, float *z, float *m) {
@@ -568,11 +597,13 @@ void renderMain(string file)
 	glewInit();
 	
 	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &vbo_normals);
 
 	// cenas de luzes ig
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_RESCALE_NORMAL);
 
 	float dark[4] = {0.2, 0.2, 0.2, 1.0};
 	float white[4] = {1.0, 1.0, 1.0, 1.0};
@@ -593,6 +624,9 @@ void renderMain(string file)
 		glLightfv(LE, GL_DIFFUSE, white);
 		glLightfv(LE, GL_SPECULAR, white);
 	}
+
+	// float amb[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	// glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb);
 
 	// // light colors
 	// glLightfv(GL_LIGHT0, GL_AMBIENT, dark);
