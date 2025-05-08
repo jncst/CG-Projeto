@@ -762,6 +762,24 @@ void generateTorus(float insideRadius, float outsideRadius, int slices, int stac
            
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
+            float n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * i);
+            float n1y = sin((-M_PI / 2) + anguloVertical * j);
+            float n1z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * i);
+
+            float n2x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+            float n2y = sin((-M_PI / 2) + anguloVertical * j);
+            float n2z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+            float n3x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+            float n3y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+            float n3z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
             // Triangulo 2
             ax = outsideRadius * sin(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
             ay = insideRadius * sin((-M_PI / 2) + anguloVertical * j);
@@ -776,6 +794,24 @@ void generateTorus(float insideRadius, float outsideRadius, int slices, int stac
             cz = outsideRadius * cos(anguloHorizontal * i) + insideRadius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
             
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+            n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+            n1y = sin((-M_PI / 2) + anguloVertical * j);
+            n1z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+            n2x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * (i + 1));
+            n2y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+            n2z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * (i + 1));
+
+            n3x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+            n3y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+            n3z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+
+            normalize(n1x, n1y, n1z);
+            normalize(n2x, n2y, n2z);
+            normalize(n3x, n3y, n3z);
+
+            writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
         }
     }
 }
