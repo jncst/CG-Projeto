@@ -39,13 +39,8 @@ float minAngleY = -60.0;
 
 float zoom = 0.5f;
 
-
-map<string, GLuint> loadedModels;
-
-
 // Animation stuff
 float TESSELATION = 0.01;
-
 
 
 float camX;
@@ -59,6 +54,7 @@ int valor = 100; // valor para limitar numero de triangulos em funcoes para ajud
 // VBO STUFF
 vector <float> triangles;
 vector <float> normals;
+vector <float> texturePoints;
 GLuint vbo, vbo_normals;
 
 //* VARIÁVEIS /////////////////////////////////////////////////////////////////////
@@ -127,6 +123,24 @@ void loadNormals (string line)
 	normals.push_back (cz);
 }
 
+void loadTexturePoints (string line)
+{
+	float ax, ay, bx, by, cx, cy; 
+	
+	stringstream ss(line);
+    ss >> ax >> ay >> bx >> by >> cx >> cy;
+
+	texturePoints.push_back (ax);
+	texturePoints.push_back (ay);
+
+	texturePoints.push_back (bx);
+	texturePoints.push_back (by);
+	texturePoints.push_back (cx);
+	texturePoints.push_back (cy);
+}
+
+
+
 void loadObject (string model)
 {
 	ifstream file("../generatorResults/" + model);
@@ -139,7 +153,6 @@ void loadObject (string model)
 		loadNormals (line);
 		// getline(file, line);
 		// loadTexturePoints (line);
-
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -529,6 +542,7 @@ void renderScene()
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	drawAxis();
 	// exemplo de luz
 	// float pos[4] = {1.0, 1.0, 1.0, 0.0};
 	// glLightfv(GL_LIGHT0, GL_POSITION, pos);
@@ -559,9 +573,8 @@ void renderScene()
 		}
 	}
 
-	glDisable(GL_LIGHTING);
-    drawAxis();
-    glEnable(GL_LIGHTING);
+	// glDisable(GL_LIGHTING);
+    // glEnable(GL_LIGHTING);
 
 	float elapsedMs = glutGet(GLUT_ELAPSED_TIME);
     float elapsed  = elapsedMs / 1000.0f;
@@ -595,46 +608,43 @@ void renderMain(string file)
 	glutCreateWindow("Projeto-CG@DI-UM");
 	
 	glewInit();
+
+	// glShadeModel(GL_SMOOTH);
 	
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &vbo_normals);
 
 	// cenas de luzes ig
 
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_RESCALE_NORMAL);
-
-	float dark[4] = {0.2, 0.2, 0.2, 1.0};
-	float white[4] = {1.0, 1.0, 1.0, 1.0};
-	float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-	for (size_t i = 0; i < lights.size() && i < 8; ++i)
+	if (lights.size() > 0)
 	{
-		GLenum LE = GL_LIGHT0 + i;
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glEnable(GL_RESCALE_NORMAL);
+	
+		float dark[4] = {0.2, 0.2, 0.2, 1.0};
+		float white[4] = {1.0, 1.0, 1.0, 1.0};
+		float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-		glEnable(LE);
-
-		// light colors
-		GLfloat diff[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-		GLfloat amb [4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-		GLfloat spec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-		glLightfv(LE, GL_AMBIENT, dark);
-		glLightfv(LE, GL_DIFFUSE, white);
-		glLightfv(LE, GL_SPECULAR, white);
+		for (size_t i = 0; i < lights.size() && i < 8; ++i)
+		{
+			GLenum LE = GL_LIGHT0 + i;
+	
+			glEnable(LE);
+	
+			// light colors
+			GLfloat diff[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			GLfloat amb [4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+			GLfloat spec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	
+			glLightfv(LE, GL_AMBIENT, dark);
+			glLightfv(LE, GL_DIFFUSE, white);
+			glLightfv(LE, GL_SPECULAR, white);
+		}
+	
+		// controls global ambient light
+		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
 	}
-
-	// float amb[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	// glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb);
-
-	// // light colors
-	// glLightfv(GL_LIGHT0, GL_AMBIENT, dark);
-	// glLightfv(GL_LIGHT0, GL_DIFFUSE, white);
-	// glLightfv(GL_LIGHT0, GL_SPECULAR, white);
-
-	// controls global ambient light
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
 
 
     // Required callback registry 

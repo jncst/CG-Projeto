@@ -45,6 +45,18 @@ void writeNormals(const string& filename, float ax, float ay, float az, float bx
     file << ax << " " << ay << " " << az << " " << bx << " " << by << " " << bz << " " << cx << " " << cy << " " << cz << " normals\n";
 }
 
+void writeTextures(const string& filename, float ax, float ay, float bx, float by, float cx, float cy)
+{
+    ofstream file("../generatorResults/" + filename, ios::app);		//abre o ficheiro para escrita
+    if (!file)
+    {
+        cerr << "Erro ao abrir o ficheiro.\n";
+        return;
+    }
+
+    file << ax << " " << ay << " " << bx << " " << by << " " << cx << " " << cy << " textures\n";
+}
+
 void normalize(float &x, float &y, float &z)
 {
     float length = sqrt(x * x + y * y + z * z);
@@ -129,8 +141,7 @@ void readPatchFile(const string& filename, vector <array<int, 16>>& patches, vec
 
     //===| LEITURA |===
 
-
-float bernstein(int i, float t)             //Bi(t) = 3Ci * (1-t)^(3-i) * t^i
+    float bernstein(int i, float t)
 {
     switch (i)
     {
@@ -138,108 +149,290 @@ float bernstein(int i, float t)             //Bi(t) = 3Ci * (1-t)^(3-i) * t^i
         case 1: return 3 * t * (1 - t) * (1 - t);
         case 2: return 3 * t * t * (1 - t);
         case 3: return t * t * t;
-
         default: return 0;
     }
 }
 
-
-Point calculaBezier(float u, float v, Point grelha[4][4])       //u e v em [0,1]
+float bernsteinDeriv(int i, float t)
 {
-    Point p = { 0.0f, 0.0f, 0.0f };
-    float bu, bv;
+    switch (i)
+    {
+        case 0: return -3 * (1 - t) * (1 - t);
+        case 1: return  3 * (1 - t) * (1 - t) - 6 * t * (1 - t);
+        case 2: return  6 * t * (1 - t) - 3 * t * t;
+        case 3: return  3 * t * t;
+        default: return 0;
+    }
+}
+
+Point calculaBezierDeriv(float u, float v, Point grelha[4][4], Point &ru, Point &rv)
+{
+    Point p = {0.0f, 0.0f, 0.0f};
+    ru      = {0.0f, 0.0f, 0.0f};
+    rv      = {0.0f, 0.0f, 0.0f};
 
     for (int i = 0; i < 4; i++)
     {
-        bu = bernstein(i, u);
+        float bu  = bernstein(i, u);
+        float dbu = bernsteinDeriv(i, u);
 
         for (int j = 0; j < 4; j++)
         {
-            bv = bernstein(j, v);
+            float bv  = bernstein(j, v);
+            float dbv = bernsteinDeriv(j, v);
+            Point cp = grelha[i][j];
 
-            p.x += grelha[i][j].x * bu * bv;
-            p.y += grelha[i][j].y * bu * bv;
-            p.z += grelha[i][j].z * bu * bv;
+            // posição
+            p.x += cp.x * bu  * bv;
+            p.y += cp.y * bu  * bv;
+            p.z += cp.z * bu  * bv;
+
+            // ∂P/∂u
+            ru.x += cp.x * dbu * bv;
+            ru.y += cp.y * dbu * bv;
+            ru.z += cp.z * dbu * bv;
+
+            // ∂P/∂v
+            rv.x += cp.x * bu  * dbv;
+            rv.y += cp.y * bu  * dbv;
+            rv.z += cp.z * bu  * dbv;
         }
     }
 
     return p;
 }
 
-
-void tessellatePatch(Point grelha[4][4], vector<Point>& pontosFinais, int tessellationLevel)       //escreve nos pontos finais a partir da grelha de pontos de controlo
+void tessellatePatch(Point grelha[4][4], vector<Point> &pontosFinais, vector<Point> &normaisFinais, int tessLevel)
 {
-    float step = 1.0f / tessellationLevel;          // nível da tesselation (o valor que incrementa u e v)
+    float step = 1.0f / tessLevel;
 
-    for (int i = 0; i < tessellationLevel; ++i)
+    for (int i = 0; i < tessLevel; ++i)
     {
-
-        float u = i * step;
+        float u     = i     * step;
         float uNext = (i + 1) * step;
 
-        for (int j = 0; j < tessellationLevel; ++j)
+        for (int j = 0; j < tessLevel; ++j)
         {
-            float v = j * step;
+            float v     = j     * step;
             float vNext = (j + 1) * step;
 
-                // Calcular os 4 pontos do quadrado atual
-            Point p1 = calculaBezier(u, v, grelha);
-            Point p2 = calculaBezier(uNext, v, grelha);
-            Point p3 = calculaBezier(u, vNext, grelha);
-            Point p4 = calculaBezier(uNext, vNext, grelha);
+            Point ru1, rv1, ru2, rv2, ru3, rv3, ru4, rv4;
+            Point p1 = calculaBezierDeriv(u,      v,      grelha, ru1, rv1);
+            Point p2 = calculaBezierDeriv(uNext,  v,      grelha, ru2, rv2);
+            Point p3 = calculaBezierDeriv(u,      vNext,  grelha, ru3, rv3);
+            Point p4 = calculaBezierDeriv(uNext,  vNext,  grelha, ru4, rv4);
 
-                // Triângulo 1: p1, p2, p3
+            // triângulo 1: p1, p3, p2
             pontosFinais.push_back(p1);
             pontosFinais.push_back(p3);
             pontosFinais.push_back(p2);
 
-                // Triângulo 2: p2, p4, p3
+            Point N1;
+            N1.x = rv1.y * ru1.z - rv1.z * ru1.y;
+            N1.y = rv1.z * ru1.x - rv1.x * ru1.z;
+            N1.z = rv1.x * ru1.y - rv1.y * ru1.x;
+            normalize(N1.x, N1.y, N1.z);
+
+            Point N3;
+            N3.x = rv3.y * ru3.z - rv3.z * ru3.y;
+            N3.y = rv3.z * ru3.x - rv3.x * ru3.z;
+            N3.z = rv3.x * ru3.y - rv3.y * ru3.x;
+            normalize(N3.x, N3.y, N3.z);
+
+            Point N2;
+            N2.x = rv2.y * ru2.z - rv2.z * ru2.y;
+            N2.y = rv2.z * ru2.x - rv2.x * ru2.z;
+            N2.z = rv2.x * ru2.y - rv2.y * ru2.x;
+            normalize(N2.x, N2.y, N2.z);
+
+            normaisFinais.push_back(N1);
+            normaisFinais.push_back(N3);
+            normaisFinais.push_back(N2);
+
+            // triângulo 2: p2, p3, p4
             pontosFinais.push_back(p2);
             pontosFinais.push_back(p3);
             pontosFinais.push_back(p4);
+
+            Point N4;
+            N4.x = rv4.y * ru4.z - rv4.z * ru4.y;
+            N4.y = rv4.z * ru4.x - rv4.x * ru4.z;
+            N4.z = rv4.x * ru4.y - rv4.y * ru4.x;
+            normalize(N4.x, N4.y, N4.z);
+
+            normaisFinais.push_back(N2);
+            normaisFinais.push_back(N3);
+            normaisFinais.push_back(N4);
         }
     }
 }
 
-void generateBezier(const std::string& filenameIN, int tessellationLevel, const std::string& filenameOUT)     //função principal para os patches bezier ->     | generator patch teapot.patch 10 bezier_10.3d |
+void generateBezier(const std::string &filenameIN, int tessLevel, const std::string &filenameOUT)
 {
-        // leitura do ficheiro
     readPatchFile(filenameIN, patches, controlPoints);
 
-        // podemos meter o vetor de pontos finais fora que vai armazenar todas as patches aqui
     vector<Point> pontosFinais;
+    vector<Point> normaisFinais;
 
-        // para cada patch, armazenamos os pontos de controlo numa grelha 4x4
-    for (const auto& patch : patches)
+    for (auto &patch : patches)
     {
         Point grelha[4][4];
-
-            // preenchimento da grelha
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
+            {
                 grelha[i][j] = controlPoints[patch[i * 4 + j]];
+            }
         }
-
-            // tesselação do patch
-        tessellatePatch(grelha, pontosFinais, tessellationLevel);          //tenho os triângulos de um patch
+        tessellatePatch(grelha, pontosFinais, normaisFinais, tessLevel);
     }
 
-        // escrita dos pontos no ficheiro
-    int size = pontosFinais.size();         //tamanho do array para iterar
-
-    for (int i = 0; i < size; i += 3)
+    size_t n = pontosFinais.size();
+    for (size_t i = 0; i < n; i += 3)
     {
+        auto &A = pontosFinais[i];
+        auto &B = pontosFinais[i + 1];
+        auto &C = pontosFinais[i + 2];
 
-        auto& A = pontosFinais[i];
-        auto& B = pontosFinais[i + 1];
-        auto& C = pontosFinais[i + 2];
+        writeTriangle(filenameOUT,
+                      A.x, A.y, A.z,
+                      B.x, B.y, B.z,
+                      C.x, C.y, C.z);
 
-        writeTriangle(filenameOUT, A.x, A.y, A.z,
-                                B.x, B.y, B.z,
-                                C.x, C.y, C.z);
+        auto &N1 = normaisFinais[i];
+        auto &N2 = normaisFinais[i + 1];
+        auto &N3 = normaisFinais[i + 2];
+
+        writeNormals(filenameOUT,
+                     N1.x, N1.y, N1.z,
+                     N2.x, N2.y, N2.z,
+                     N3.x, N3.y, N3.z);
     }
 }
+
+
+
+// float bernstein(int i, float t)             //Bi(t) = 3Ci * (1-t)^(3-i) * t^i
+// {
+//     switch (i)
+//     {
+//         case 0: return (1 - t) * (1 - t) * (1 - t);
+//         case 1: return 3 * t * (1 - t) * (1 - t);
+//         case 2: return 3 * t * t * (1 - t);
+//         case 3: return t * t * t;
+
+//         default: return 0;
+//     }
+// }
+
+// float bernsteinDeriv(int i, float t)
+// {
+//     switch (i)
+//     {
+//         case 0: return -3*(1 - t)*(1 - t);
+//         case 1: return  3*(1 - t)*(1 - t) - 6*t*(1 - t);
+//         case 2: return  6*t*(1 - t) - 3*t*t;
+//         case 3: return  3*t*t;
+//         default: return 0;
+//     }
+// }
+
+
+// Point calculaBezier(float u, float v, Point grelha[4][4])       //u e v em [0,1]
+// {
+//     Point p = { 0.0f, 0.0f, 0.0f };
+//     float bu, bv;
+
+//     for (int i = 0; i < 4; i++)
+//     {
+//         bu = bernstein(i, u);
+
+//         for (int j = 0; j < 4; j++)
+//         {
+//             bv = bernstein(j, v);
+
+//             p.x += grelha[i][j].x * bu * bv;
+//             p.y += grelha[i][j].y * bu * bv;
+//             p.z += grelha[i][j].z * bu * bv;
+//         }
+//     }
+
+//     return p;
+// }
+
+// void tessellatePatch(Point grelha[4][4], vector<Point>& pontosFinais, int tessellationLevel)       //escreve nos pontos finais a partir da grelha de pontos de controlo
+// {
+//     float step = 1.0f / tessellationLevel;          // nível da tesselation (o valor que incrementa u e v)
+
+//     for (int i = 0; i < tessellationLevel; ++i)
+//     {
+
+//         float u = i * step;
+//         float uNext = (i + 1) * step;
+
+//         for (int j = 0; j < tessellationLevel; ++j)
+//         {
+//             float v = j * step;
+//             float vNext = (j + 1) * step;
+
+//                 // Calcular os 4 pontos do quadrado atual
+//             Point p1 = calculaBezier(u, v, grelha);
+//             Point p2 = calculaBezier(uNext, v, grelha);
+//             Point p3 = calculaBezier(u, vNext, grelha);
+//             Point p4 = calculaBezier(uNext, vNext, grelha);
+
+//                 // Triângulo 1: p1, p2, p3
+//             pontosFinais.push_back(p1);
+//             pontosFinais.push_back(p3);
+//             pontosFinais.push_back(p2);
+
+//                 // Triângulo 2: p2, p4, p3
+//             pontosFinais.push_back(p2);
+//             pontosFinais.push_back(p3);
+//             pontosFinais.push_back(p4);
+//         }
+//     }
+// }
+
+// void generateBezier(const std::string& filenameIN, int tessellationLevel, const std::string& filenameOUT)     //função principal para os patches bezier ->     | generator patch teapot.patch 10 bezier_10.3d |
+// {
+//         // leitura do ficheiro
+//     readPatchFile(filenameIN, patches, controlPoints);
+
+//         // podemos meter o vetor de pontos finais fora que vai armazenar todas as patches aqui
+//     vector<Point> pontosFinais;
+
+//         // para cada patch, armazenamos os pontos de controlo numa grelha 4x4
+//     for (const auto& patch : patches)
+//     {
+//         Point grelha[4][4];
+
+//             // preenchimento da grelha
+//         for (int i = 0; i < 4; i++)
+//         {
+//             for (int j = 0; j < 4; j++)
+//                 grelha[i][j] = controlPoints[patch[i * 4 + j]];
+//         }
+
+//             // tesselação do patch
+//         tessellatePatch(grelha, pontosFinais, tessellationLevel);          //tenho os triângulos de um patch
+//     }
+
+//         // escrita dos pontos no ficheiro
+//     int size = pontosFinais.size();         //tamanho do array para iterar
+
+//     for (int i = 0; i < size; i += 3)
+//     {
+
+//         auto& A = pontosFinais[i];
+//         auto& B = pontosFinais[i + 1];
+//         auto& C = pontosFinais[i + 2];
+
+//         writeTriangle(filenameOUT, A.x, A.y, A.z,
+//                                 B.x, B.y, B.z,
+//                                 C.x, C.y, C.z);
+//     }
+// }
 
 //===========================| BEZIER PATCHES |===========================
 
@@ -250,6 +443,7 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
     centered = 1 - centered;
 
     float subDivision = length / divisions;
+    float textureSubdivision = 1.0 / divisions;
     float half = length / 2;
 
     float startX = half * ((x * centered) + y - z);
@@ -263,13 +457,6 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
     float addVerticalX = subDivision * (-y);
     float addVerticalY = subDivision * (abs(x) + abs(z));
     float addVerticalZ = subDivision * 0;
-
-    // cout << "x start: " << startX << "\n";
-    // cout << "y start: " << startY << "\n";
-    // cout << "z start: " << startZ << "\n";
-
-    // cout << "addh: (" << addHorizontalX << ", " << addHorizontalY << ", " << addHorizontalZ << ")" << "\n";
-    // cout << "addv: (" << addVerticalX << ", " << addVerticalY << ", " << addVerticalZ << ")" << "\n";
 
     float n1x = x;
     float n1y = y;
@@ -320,6 +507,17 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
             normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+            float u1 = i * textureSubdivision;
+            float v1 = j * textureSubdivision;
+            float u2 = (i + 1) * textureSubdivision;
+            float v2 = j * textureSubdivision;
+            float u3 = i * textureSubdivision;
+            float v3 = (j + 1) * textureSubdivision;
+
+            cout << u1 << "\n";
+
+            writeTextures (filename, u1, v1, u2, v2, u3, v3);
         
 
             // Triangulo 2
@@ -342,6 +540,15 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
             normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+            u1 = (i + 1) * textureSubdivision;
+            v1 = j * textureSubdivision;
+            u2 = (i + 1) * textureSubdivision;
+            v2 = (j + 1) * textureSubdivision;
+            u3 = i * textureSubdivision;
+            v3 = (j + 1) * textureSubdivision;
+
+            writeTextures (filename, u1, v1, u2, v2, u3, v3);
         }
     }
 }
@@ -622,17 +829,17 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
            
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
-            float n1x = stackRadius * sin(anguloHorizontal * i);
+            float n1x = sin(anguloHorizontal * i);
             float n1y = normalY;
-            float n1z = stackRadius * cos(anguloHorizontal * i);
+            float n1z = cos(anguloHorizontal * i);
 
-            float n2x = stackRadius * sin(anguloHorizontal * (i + 1));
+            float n2x = sin(anguloHorizontal * (i + 1));
             float n2y = normalY;
-            float n2z = stackRadius * cos(anguloHorizontal * (i + 1));
+            float n2z = cos(anguloHorizontal * (i + 1));
 
-            float n3x = stackAboveRadius * sin(anguloHorizontal * i);
+            float n3x = sin(anguloHorizontal * i);
             float n3y = normalY;
-            float n3z = stackAboveRadius * cos(anguloHorizontal * i);
+            float n3z = cos(anguloHorizontal * i);
 
             normalize(n1x, n1y, n1z);
             normalize(n2x, n2y, n2z);
@@ -656,17 +863,17 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
 
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
-            n1x = stackRadius * sin(anguloHorizontal * (i + 1));
+            n1x = sin(anguloHorizontal * (i + 1));
             n1y = normalY;
-            n1z = stackRadius * cos(anguloHorizontal * (i + 1));
+            n1z = cos(anguloHorizontal * (i + 1));
 
-            n2x = stackAboveRadius * sin(anguloHorizontal * (i + 1));
+            n2x = sin(anguloHorizontal * (i + 1));
             n2y = normalY;
-            n2z = stackAboveRadius * cos(anguloHorizontal * (i + 1));
+            n2z = cos(anguloHorizontal * (i + 1));
 
-            n3x = stackAboveRadius * sin(anguloHorizontal * i);
+            n3x = sin(anguloHorizontal * i);
             n3y = normalY;
-            n3z = stackAboveRadius * cos(anguloHorizontal * i);
+            n3z = cos(anguloHorizontal * i);
 
             normalize(n1x, n1y, n1z);
             normalize(n2x, n2y, n2z);
@@ -704,17 +911,21 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
 
         writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
+        // float n1x = sin((anguloHorizontal * i) + (anguloHorizontal / 2));
+        // float n1y = normalY;
+        // float n1z = cos((anguloHorizontal * i) + (anguloHorizontal / 2));
+
         float n1x = 0;
         float n1y = 1;
         float n1z = 0;
 
-        float n2x = stackRadius * sin(anguloHorizontal * i);
-        float n2y = height - stackHeight;
-        float n2z = stackRadius * cos(anguloHorizontal * i);
+        float n2x = sin(anguloHorizontal * i);
+        float n2y = normalY;
+        float n2z = cos(anguloHorizontal * i);
 
-        float n3x = stackRadius * sin(anguloHorizontal * (i + 1));
-        float n3y = height - stackHeight;
-        float n3z = stackRadius * cos(anguloHorizontal * (i + 1));
+        float n3x = sin(anguloHorizontal * (i + 1));
+        float n3y = normalY;
+        float n3z = cos(anguloHorizontal * (i + 1));
 
         normalize(n1x, n1y, n1z);
         normalize(n2x, n2y, n2z);
