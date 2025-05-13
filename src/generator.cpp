@@ -80,10 +80,16 @@ struct Point
     float x, y, z;
 };
 
+struct Point2
+{
+    float x, y;
+};
+
 vector <array<int, 16>> patches;         // cada patch tem 16 índices
 vector <Point> controlPoints;
+vector<Point2> texturasFinais;
 
-        //==== LEITURA ====
+//==== LEITURA ====
 
 void readPatchFile(const string& filename, vector <array<int, 16>>& patches, vector <Point>& controlPoints)
 {
@@ -245,6 +251,10 @@ void tessellatePatch(Point grelha[4][4], vector<Point> &pontosFinais, vector<Poi
             N2.z = rv2.x * ru2.y - rv2.y * ru2.x;
             normalize(N2.x, N2.y, N2.z);
 
+            texturasFinais.push_back({u, v});
+            texturasFinais.push_back({u, vNext});
+            texturasFinais.push_back({uNext, v});
+
             normaisFinais.push_back(N1);
             normaisFinais.push_back(N3);
             normaisFinais.push_back(N2);
@@ -263,6 +273,10 @@ void tessellatePatch(Point grelha[4][4], vector<Point> &pontosFinais, vector<Poi
             normaisFinais.push_back(N2);
             normaisFinais.push_back(N3);
             normaisFinais.push_back(N4);
+
+            texturasFinais.push_back({uNext, v});
+            texturasFinais.push_back({u, vNext});
+            texturasFinais.push_back({uNext, vNext});
         }
     }
 }
@@ -307,132 +321,18 @@ void generateBezier(const std::string &filenameIN, int tessLevel, const std::str
                      N1.x, N1.y, N1.z,
                      N2.x, N2.y, N2.z,
                      N3.x, N3.y, N3.z);
+
+        auto &T1 = texturasFinais[i];
+        auto &T2 = texturasFinais[i + 1];
+        auto &T3 = texturasFinais[i + 2];
+        
+        writeTextures(filenameOUT,
+                    T1.x, T1.y,
+                    T2.x, T2.y,
+                    T3.x, T3.y);
     }
 }
 
-
-
-// float bernstein(int i, float t)             //Bi(t) = 3Ci * (1-t)^(3-i) * t^i
-// {
-//     switch (i)
-//     {
-//         case 0: return (1 - t) * (1 - t) * (1 - t);
-//         case 1: return 3 * t * (1 - t) * (1 - t);
-//         case 2: return 3 * t * t * (1 - t);
-//         case 3: return t * t * t;
-
-//         default: return 0;
-//     }
-// }
-
-// float bernsteinDeriv(int i, float t)
-// {
-//     switch (i)
-//     {
-//         case 0: return -3*(1 - t)*(1 - t);
-//         case 1: return  3*(1 - t)*(1 - t) - 6*t*(1 - t);
-//         case 2: return  6*t*(1 - t) - 3*t*t;
-//         case 3: return  3*t*t;
-//         default: return 0;
-//     }
-// }
-
-
-// Point calculaBezier(float u, float v, Point grelha[4][4])       //u e v em [0,1]
-// {
-//     Point p = { 0.0f, 0.0f, 0.0f };
-//     float bu, bv;
-
-//     for (int i = 0; i < 4; i++)
-//     {
-//         bu = bernstein(i, u);
-
-//         for (int j = 0; j < 4; j++)
-//         {
-//             bv = bernstein(j, v);
-
-//             p.x += grelha[i][j].x * bu * bv;
-//             p.y += grelha[i][j].y * bu * bv;
-//             p.z += grelha[i][j].z * bu * bv;
-//         }
-//     }
-
-//     return p;
-// }
-
-// void tessellatePatch(Point grelha[4][4], vector<Point>& pontosFinais, int tessellationLevel)       //escreve nos pontos finais a partir da grelha de pontos de controlo
-// {
-//     float step = 1.0f / tessellationLevel;          // nível da tesselation (o valor que incrementa u e v)
-
-//     for (int i = 0; i < tessellationLevel; ++i)
-//     {
-
-//         float u = i * step;
-//         float uNext = (i + 1) * step;
-
-//         for (int j = 0; j < tessellationLevel; ++j)
-//         {
-//             float v = j * step;
-//             float vNext = (j + 1) * step;
-
-//                 // Calcular os 4 pontos do quadrado atual
-//             Point p1 = calculaBezier(u, v, grelha);
-//             Point p2 = calculaBezier(uNext, v, grelha);
-//             Point p3 = calculaBezier(u, vNext, grelha);
-//             Point p4 = calculaBezier(uNext, vNext, grelha);
-
-//                 // Triângulo 1: p1, p2, p3
-//             pontosFinais.push_back(p1);
-//             pontosFinais.push_back(p3);
-//             pontosFinais.push_back(p2);
-
-//                 // Triângulo 2: p2, p4, p3
-//             pontosFinais.push_back(p2);
-//             pontosFinais.push_back(p3);
-//             pontosFinais.push_back(p4);
-//         }
-//     }
-// }
-
-// void generateBezier(const std::string& filenameIN, int tessellationLevel, const std::string& filenameOUT)     //função principal para os patches bezier ->     | generator patch teapot.patch 10 bezier_10.3d |
-// {
-//         // leitura do ficheiro
-//     readPatchFile(filenameIN, patches, controlPoints);
-
-//         // podemos meter o vetor de pontos finais fora que vai armazenar todas as patches aqui
-//     vector<Point> pontosFinais;
-
-//         // para cada patch, armazenamos os pontos de controlo numa grelha 4x4
-//     for (const auto& patch : patches)
-//     {
-//         Point grelha[4][4];
-
-//             // preenchimento da grelha
-//         for (int i = 0; i < 4; i++)
-//         {
-//             for (int j = 0; j < 4; j++)
-//                 grelha[i][j] = controlPoints[patch[i * 4 + j]];
-//         }
-
-//             // tesselação do patch
-//         tessellatePatch(grelha, pontosFinais, tessellationLevel);          //tenho os triângulos de um patch
-//     }
-
-//         // escrita dos pontos no ficheiro
-//     int size = pontosFinais.size();         //tamanho do array para iterar
-
-//     for (int i = 0; i < size; i += 3)
-//     {
-
-//         auto& A = pontosFinais[i];
-//         auto& B = pontosFinais[i + 1];
-//         auto& C = pontosFinais[i + 2];
-
-//         writeTriangle(filenameOUT, A.x, A.y, A.z,
-//                                 B.x, B.y, B.z,
-//                                 C.x, C.y, C.z);
-//     }
-// }
 
 //===========================| BEZIER PATCHES |===========================
 
@@ -514,8 +414,6 @@ void generatePlane(int x, int y, int z, int centered, float length, int division
             float v2 = j * textureSubdivision;
             float u3 = i * textureSubdivision;
             float v3 = (j + 1) * textureSubdivision;
-
-            cout << u1 << "\n";
 
             writeTextures (filename, u1, v1, u2, v2, u3, v3);
         
@@ -610,6 +508,17 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
         normalize(n3x, n3y, n3z);
 
         writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+        float t1x = (float)i / slices;
+        float t1y = (float)0;
+
+        float t2x = (float)(i + 1) / slices;
+        float t2y = (float)1 / stacks;
+
+        float t3x = (float)i / slices;
+        float t3y = (float)1 / stacks;
+
+        writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
     }
 
 
@@ -661,6 +570,17 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
 
+            float t1x = (float)i / slices;
+            float t1y = (float)j / stacks;
+
+            float t2x = (float)(i + 1) / slices;
+            float t2y = (float)j / stacks;
+
+            float t3x = (float)i / slices;
+            float t3y = (float)(j + 1) / stacks;
+
+            writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
+
             // Triangulo 2
             ax = radius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
             ay = radius * sin((-M_PI / 2) + anguloVertical * j);
@@ -675,6 +595,7 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
             cz = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
             
             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+            
 
             n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
             n1y = sin((-M_PI / 2) + anguloVertical * j);
@@ -693,6 +614,17 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
             normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+            t1x = (float)(i + 1) / slices;
+            t1y = (float)j / stacks;
+
+            t2x = (float)(i + 1) / slices;
+            t2y = (float)(j + 1) / stacks;
+
+            t3x = (float)i / slices;
+            t3y = (float)(j + 1) / stacks;
+
+            writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
         }
     }
     
@@ -738,6 +670,17 @@ void generateSphere(float radius, int slices, int stacks, const string& filename
         normalize(n3x, n3y, n3z);
 
         writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+        float t1x = (float)i / slices;
+        float t1y = (float)1;
+
+        float t2x = (float)i / slices;
+        float t2y = 1 - (float)1 / stacks;
+
+        float t3x = (float)(i + 1) / slices;
+        float t3y = (float)1 - (float)1 / stacks;
+
+        writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
     }
 }
 
@@ -779,19 +722,30 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
         float n1y = -1;
         float n1z = 0;
 
-        float n2x = sin(anguloHorizontal * (i + 1));
-        float n2y = 0;
-        float n2z = cos(anguloHorizontal * (i + 1));
+        float n2x = 0;
+        float n2y = -1;
+        float n2z = 0;
 
-        float n3x = sin(anguloHorizontal * i);
-        float n3y = 0;
-        float n3z = cos(anguloHorizontal * i);
+        float n3x = 0;
+        float n3y = -1;
+        float n3z = 0;
 
         normalize(n1x, n1y, n1z);
         normalize(n2x, n2y, n2z);
         normalize(n3x, n3y, n3z);
 
         writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+        float t1x = (float)i / slices;
+        float t1y = (float)1;
+
+        float t2x = (float)(i + 1) / slices;
+        float t2y = (float)0;
+
+        float t3x = (float)i / slices;
+        float t3y = (float)0;
+
+        writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
     }
 
 
@@ -846,6 +800,17 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
             normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+            float t1x = (float)i / slices;
+            float t1y = (float)j / stacks;
+
+            float t2x = (float)(i + 1) / slices;
+            float t2y = (float)j / stacks;
+
+            float t3x = (float)i / slices;
+            float t3y = (float)(j + 1) / stacks;
+
+            writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
             
 
             // Triangulo 2
@@ -880,6 +845,17 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
             normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+            t1x = (float)(i + 1) / slices;
+            t1y = (float)j / stacks;
+
+            t2x = (float)(i + 1) / slices;
+            t2y = (float)(j + 1) / stacks;
+
+            t3x = (float)i / slices;
+            t3y = (float)(j + 1) / stacks;
+
+            writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
         }
     }
     
@@ -911,13 +887,13 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
 
         writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
 
-        // float n1x = sin((anguloHorizontal * i) + (anguloHorizontal / 2));
-        // float n1y = normalY;
-        // float n1z = cos((anguloHorizontal * i) + (anguloHorizontal / 2));
+        float n1x = sin((anguloHorizontal * i) + (anguloHorizontal / 2));
+        float n1y = normalY;
+        float n1z = cos((anguloHorizontal * i) + (anguloHorizontal / 2));
 
-        float n1x = 0;
-        float n1y = 1;
-        float n1z = 0;
+        // float n1x = 0;
+        // float n1y = 1;
+        // float n1z = 0;
 
         float n2x = sin(anguloHorizontal * i);
         float n2y = normalY;
@@ -932,6 +908,17 @@ void generateCone(float radius, float height, int slices, int stacks, const std:
         normalize(n3x, n3y, n3z);
 
         writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+        float t1x = (float)i / slices;
+        float t1y = (float)1;
+
+        float t2x = (float)i / slices;
+        float t2y = 1 - (float)1 / stacks;
+
+        float t3x = (float)(i + 1) / slices;
+        float t3y = (float)1 - (float)1 / stacks;
+
+        writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
     }
 }
 
@@ -991,6 +978,17 @@ void generateTorus(float insideRadius, float outsideRadius, int slices, int stac
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
 
+            float t1x = (float)i / slices;
+            float t1y = (float)j / (stacks * 2);
+
+            float t2x = (float)(i + 1) / slices;
+            float t2y = (float)j / (stacks * 2);
+
+            float t3x = (float)i / slices;
+            float t3y = (float)(j + 1) / (stacks * 2);
+
+            writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
+
             // Triangulo 2
             ax = outsideRadius * sin(anguloHorizontal * (i + 1)) + insideRadius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
             ay = insideRadius * sin((-M_PI / 2) + anguloVertical * j);
@@ -1023,6 +1021,17 @@ void generateTorus(float insideRadius, float outsideRadius, int slices, int stac
             normalize(n3x, n3y, n3z);
 
             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+            t1x = (float)(i + 1) / slices;
+            t1y = (float)j / (stacks * 2);
+
+            t2x = (float)(i + 1) / slices;
+            t2y = (float)(j + 1) / (stacks * 2);
+
+            t3x = (float)i / slices;
+            t3y = (float)(j + 1) / (stacks * 2);
+
+            writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
         }
     }
 }
@@ -1079,3 +1088,115 @@ int main(int argc, char* argv[])
         cout << "Invalid object\n";
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+// void generateSphere(float radius, int slices, int stacks, const string& filename)
+// {
+//     float anguloHorizontal = (2 * M_PI) / slices;
+//     float anguloVertical = M_PI / stacks;
+
+//     for (int j = 0; j < stacks; j ++)
+//     {
+//         for (int i = 0; i < slices; i ++)
+//         {
+//             // Triangulo 1
+//             float ax = radius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * i);
+//             float ay = radius * sin((-M_PI / 2) + anguloVertical * j);
+//             float az = radius * cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * i);
+
+//             float bx = radius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+//             float by = radius * sin((-M_PI / 2) + anguloVertical * j);
+//             float bz = radius * cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+//             float cx = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+//             float cy = radius * sin((-M_PI / 2) + anguloVertical * (j + 1));
+//             float cz = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+           
+//             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+
+//             float n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * i);
+//             float n1y = sin((-M_PI / 2) + anguloVertical * j);
+//             float n1z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * i);
+
+//             float n2x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+//             float n2y = sin((-M_PI / 2) + anguloVertical * j);
+//             float n2z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+//             float n3x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+//             float n3y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+//             float n3z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+
+//             normalize(n1x, n1y, n1z);
+//             normalize(n2x, n2y, n2z);
+//             normalize(n3x, n3y, n3z);
+
+//             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+//             float t1x = (float)i / slices;
+//             float t1y = (float)j / stacks;
+
+//             float t2x = (float)(i + 1) / slices;
+//             float t2y = (float)j / stacks;
+
+//             float t3x = (float)i / slices;
+//             float t3y = (float)(j + 1) / stacks;
+
+//             writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
+
+//             // Triangulo 2
+//             ax = radius * cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+//             ay = radius * sin((-M_PI / 2) + anguloVertical * j);
+//             az = radius * cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+//             bx = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * (i + 1));
+//             by = radius * sin((-M_PI / 2) + anguloVertical * (j + 1));
+//             bz = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * (i + 1));
+
+//             cx = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+//             cy = radius * sin((-M_PI / 2) + anguloVertical * (j + 1));
+//             cz = radius * cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+            
+//             writeTriangle (filename, ax, ay, az, bx, by, bz, cx, cy, cz);
+            
+
+//             n1x = cos((-M_PI / 2) + anguloVertical * j) * sin(anguloHorizontal * (i + 1));
+//             n1y = sin((-M_PI / 2) + anguloVertical * j);
+//             n1z = cos((-M_PI / 2) + anguloVertical * j) * cos(anguloHorizontal * (i + 1));
+
+//             n2x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * (i + 1));
+//             n2y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+//             n2z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * (i + 1));
+
+//             n3x = cos((-M_PI / 2) + anguloVertical * (j + 1)) * sin(anguloHorizontal * i);
+//             n3y = sin((-M_PI / 2) + anguloVertical * (j + 1));
+//             n3z = cos((-M_PI / 2) + anguloVertical * (j + 1)) * cos(anguloHorizontal * i);
+
+//             normalize(n1x, n1y, n1z);
+//             normalize(n2x, n2y, n2z);
+//             normalize(n3x, n3y, n3z);
+
+//             writeNormals (filename, n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
+
+//             t1x = (float)(i + 1) / slices;
+//             t1y = (float)j / stacks;
+
+//             t2x = (float)(i + 1) / slices;
+//             t2y = (float)(j + 1) / stacks;
+
+//             t3x = (float)i / slices;
+//             t3y = (float)(j + 1) / stacks;
+
+//             writeTextures (filename, t1x, t1y, t2x, t2y, t3x, t3y);
+//         }
+//     }
+// }

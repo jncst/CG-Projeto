@@ -34,6 +34,16 @@ struct Material
     float specular[4];  
     float emissive[4];  
     float shininess;  
+
+    Material()
+    {
+        // Defaults do OpenGL:
+        ambient [0] = 0.2f; ambient [1] = 0.2f; ambient [2] = 0.2f; ambient [3] = 1.0f;
+        diffuse [0] = 0.8f; diffuse [1] = 0.8f; diffuse [2] = 0.8f; diffuse [3] = 1.0f;
+        specular[0] = 0.0f; specular[1] = 0.0f; specular[2] = 0.0f; specular[3] = 1.0f;
+        emissive[0] = 0.0f; emissive[1] = 0.0f; emissive[2] = 0.0f; emissive[3] = 1.0f;
+        shininess    = 0.0f;
+    };
 }; 
 
 struct Light {

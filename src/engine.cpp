@@ -8,6 +8,8 @@
 #include <GL/glut.h>
 #endif
 
+#include <IL/il.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -17,6 +19,7 @@
 #include <vector>
 #include <map>
 #include <filesystem>
+
 
 #include "parserXML.h"
 
@@ -55,7 +58,12 @@ int valor = 100; // valor para limitar numero de triangulos em funcoes para ajud
 vector <float> triangles;
 vector <float> normals;
 vector <float> texturePoints;
-GLuint vbo, vbo_normals;
+GLuint vbo, vbo_normals, vbo_uv;
+
+static std::map<std::string, GLuint> textureMap;
+
+bool showLightSource = false;
+bool showNormals = false;
 
 //* VARIÁVEIS /////////////////////////////////////////////////////////////////////
 
@@ -82,6 +90,41 @@ void translateCameraPos()
 //* AUX FUNCTIONS /////////////////////////////////////////////////////////////////
 
 //* DESENHAR OBJETOS //////////////////////////////////////////////////////////////
+
+GLuint loadTexture(std::string s)
+{
+    unsigned int t,tw,th;
+    unsigned char *texData;
+    unsigned int texID;
+
+    ilInit();
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+    ilGenImages(1,&t);
+    ilBindImage(t);
+    ilLoadImage((ILstring)s.c_str());
+    tw = ilGetInteger(IL_IMAGE_WIDTH);
+    th = ilGetInteger(IL_IMAGE_HEIGHT);
+    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+    texData = ilGetData();
+
+    glGenTextures(1,&texID);
+    
+    glBindTexture(GL_TEXTURE_2D,texID);
+
+    glTexParameteri(GL_TEXTURE_2D,    GL_TEXTURE_WRAP_S,      GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,    GL_TEXTURE_WRAP_T,      GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D,    GL_TEXTURE_MAG_FILTER,      GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,    GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return texID;
+}
 
 void loadTriangle (string line)
 {
@@ -151,8 +194,8 @@ void loadObject (string model)
 		loadTriangle (line);
 		getline(file, line);
 		loadNormals (line);
-		// getline(file, line);
-		// loadTexturePoints (line);
+		getline(file, line);
+		loadTexturePoints (line);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -161,6 +204,10 @@ void loadObject (string model)
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size(), normals.data(), GL_STATIC_DRAW);
 
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * texturePoints.size(), texturePoints.data(), GL_STATIC_DRAW);
+
+
 	//triangles.clear();
 }
 
@@ -168,13 +215,16 @@ void drawTriangles ()
 {
 	int numVertices = triangles.size() / 3;
 
-	
+
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glVertexPointer(3, GL_FLOAT, 0, 0);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
 	glNormalPointer(GL_FLOAT, 0, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
+	glTexCoordPointer(2, GL_FLOAT, 0, 0);
 	
 	// GLint bufferSize;
 	// glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
@@ -185,9 +235,42 @@ void drawTriangles ()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	if (showNormals)
+	{
+		// Desenha as normais para debug
+		glDisable(GL_LIGHTING);
+		glColor3f(1.0f, 1.0f, 0.0f);
+
+		glBegin(GL_LINES);
+		int numVerts = normals.size() / 3;   // cada normal tem 3 componentes
+		for (int i = 0; i < numVerts; ++i)
+		{
+			// Posição do vértice
+			float vx = triangles[3 * i + 0];
+			float vy = triangles[3 * i + 1];
+			float vz = triangles[3 * i + 2];
+
+			// Normal correspondente
+			float nx = normals[3 * i + 0];
+			float ny = normals[3 * i + 1];
+			float nz = normals[3 * i + 2];
+
+			// Linha da normal: de v a v + n*scale
+			glVertex3f(vx, vy, vz);
+			glVertex3f(vx + nx * 0.2f,
+						vy + ny * 0.2f,
+						vz + nz * 0.2f);
+		}
+		glEnd();
+
+		glEnable(GL_LIGHTING);
+	}
 
 	triangles.clear();
 	normals.clear();
+	texturePoints.clear();
 }
 
 void buildRotMatrix(float *x, float *y, float *z, float *m) {
@@ -325,18 +408,16 @@ void renderCatmullRomCurve(vector <Point> points)
 //* CENAS DE INPUT /////////////////////////////////////////////////////////////////////
 void keyboard(unsigned char key, int x, int y)
 {
-    if (key == 'a')
+    if (key == 'l' || key == 'L')
 	{
-        valor++;
+        showLightSource = !showLightSource;
     }
-	else if (key == 's')
+
+	if (key == 'n' || key == 'N')
 	{
-		if (valor > 0)
-		{
-			valor--;
-		}
+        showNormals = !showNormals;
     }
-    // cout << "Valor: " << valor << "\n";
+	
     glutPostRedisplay();
 }
 
@@ -449,6 +530,7 @@ void renderGroup(const Group& group, float elapsed_time)
 {
     glPushMatrix();
 
+
     for (const auto& transform : group.transformations) 
 	{
         if (transform.type == "translate") 
@@ -515,11 +597,30 @@ void renderGroup(const Group& group, float elapsed_time)
 		glMaterialfv(GL_FRONT, GL_AMBIENT,   model.material.ambient);  
 		glMaterialfv(GL_FRONT, GL_SPECULAR,  model.material.specular);  
 		glMaterialfv(GL_FRONT, GL_EMISSION,  model.material.emissive);  
+
 		glMaterialf (GL_FRONT, GL_SHININESS, model.material.shininess);  
 
+		if (!model.texture.empty())
+		{
+			glEnable(GL_TEXTURE_2D);
+			auto it = textureMap.find(model.texture);
+			if (it == textureMap.end())
+			{
+				// carrega apenas uma vez
+				string textureFileName = "../textures/" + model.texture;
+
+				GLuint id = loadTexture(textureFileName);
+				textureMap[model.texture] = id;
+				it = textureMap.find(model.texture);
+			}
+			// agora sim já existe
+			glBindTexture(GL_TEXTURE_2D, it->second);
+		}	
         loadObject(model.file);
         drawTriangles();
-
+		
+		// glDisable(GL_TEXTURE_2D);
+		
         glPopMatrix();
     }
 
@@ -540,29 +641,44 @@ void renderScene()
 	translateCameraPos();
 	gluLookAt(camX, camY, camZ, lookAtX, lookAtY, lookAtZ, upX, upY, upZ);
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	drawAxis();
-	// exemplo de luz
-	// float pos[4] = {1.0, 1.0, 1.0, 0.0};
-	// glLightfv(GL_LIGHT0, GL_POSITION, pos);
-
 	for (size_t i = 0; i < lights.size() && i < 8; ++i)
 	{
 		auto &L = lights[i];
 		GLenum LE = GL_LIGHT0 + i;
 
 		// w = 0 para directional, w = 1 para point/spot
-		GLfloat pos[4] = {
-			L.x,
-			L.y,
-			L.z,
-			(L.type == "directional") ? 0.0f : 1.0f
-		};
-		glLightfv(LE, GL_POSITION, pos);
-
-		if (L.type == "spot")
+		if (L.type == "point")
 		{
+			GLfloat pos[4] = {
+				L.x,
+				L.y,
+				L.z,
+				1.0f
+			};
+			glLightfv(LE, GL_POSITION, pos);
+		}
+
+		else if (L.type == "directional")
+		{
+			GLfloat pos[4] = {
+				L.dirY,
+				L.dirX,
+				L.dirZ,
+				0.0f
+			};
+			glLightfv(LE, GL_POSITION, pos);
+		}
+
+		else if (L.type == "spot")
+		{
+			GLfloat pos[4] = {
+				L.x,
+				L.y,
+				L.z,
+				1.0f
+			};
+			glLightfv(LE, GL_POSITION, pos);
+
 			GLfloat dir[3] = {
 				L.dirX,
 				L.dirY,
@@ -571,10 +687,52 @@ void renderScene()
 			glLightfv(LE, GL_SPOT_DIRECTION, dir);
 			glLightf(LE, GL_SPOT_CUTOFF, L.cutoff);
 		}
+
+		if (showLightSource)
+		{
+			glDisable(GL_LIGHTING);
+
+			glPushMatrix();
+			glTranslatef(L.x, L.y, L.z);
+			
+			glColor3f(1.0f, 1.0f, 1.0f);
+			glutSolidSphere(0.1f, 20, 20);
+
+
+			if (L.type == "directional")
+			{
+				glBegin(GL_LINES);
+				glColor3f(1.0f, 1.0f, 0.0f);
+				glVertex3f(L.x, L.y, L.z);
+				glVertex3f(L.x - L.dirX, L.y - L.dirY, L.z - L.dirZ);
+				glEnd();
+			}
+
+			if (L.type == "spot")
+			{
+				glBegin(GL_LINES);
+				glColor3f(1.0f, 0.0f, 0.0f);
+				glVertex3f(0.0f, 0.0f, 0.0f);
+				
+				glVertex3f(L.dirX, L.dirY, L.dirZ);
+				glEnd();
+			}
+
+			glPopMatrix();
+			glEnable(GL_LIGHTING);
+		}
 	}
 
-	// glDisable(GL_LIGHTING);
-    // glEnable(GL_LIGHTING);
+	if (lights.size() > 0)
+	{
+		glDisable(GL_LIGHTING);
+	}
+	drawAxis();
+	if (lights.size() > 0)
+	{
+		glEnable(GL_LIGHTING);
+	}
+
 
 	float elapsedMs = glutGet(GLUT_ELAPSED_TIME);
     float elapsed  = elapsedMs / 1000.0f;
@@ -613,14 +771,16 @@ void renderMain(string file)
 	
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &vbo_normals);
+	glGenBuffers(1, &vbo_uv);
 
 	// cenas de luzes ig
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	if (lights.size() > 0)
 	{
 		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glEnable(GL_RESCALE_NORMAL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	
 		float dark[4] = {0.2, 0.2, 0.2, 1.0};
 		float white[4] = {1.0, 1.0, 1.0, 1.0};
@@ -646,7 +806,6 @@ void renderMain(string file)
 		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
 	}
 
-
     // Required callback registry 
         glutDisplayFunc(renderScene);
 		glutIdleFunc(renderScene);
@@ -664,10 +823,18 @@ void renderMain(string file)
         glEnable(GL_CULL_FACE);         // Habilita o culling
         glCullFace(GL_BACK);            
         glEnable(GL_DEPTH_TEST);		// potencialmente comentar esta linha
+		glEnable(GL_RESCALE_NORMAL);
         
     // enter GLUT's main cycle
         glutMainLoop();  
 }
+
+
+
+
+
+
+
 
 
 // Cenas de ler os ficheiros de teste
@@ -677,73 +844,69 @@ void listDirectory(const fs::path& currentPath, vector<fs::directory_entry>& ite
     int index = 1;
 
     for (const auto& entry : fs::directory_iterator(currentPath))
-	{
-        items.push_back(entry);
-        cout << index++ << ". " << entry.path().filename().string() << "\n";
+    {
+        if (entry.is_directory() 
+            || (entry.is_regular_file() && entry.path().extension() == ".xml"))
+        {
+            items.push_back(entry);
+            cout << index++ << ". " << entry.path().filename().string() << "\n";
+        }
     }
 }
 
 string readFile(const fs::path& filePath)
 {
-   ifstream file(filePath);
-
-   if (!file)
-	{
-    	cerr << "Erro ao abrir o ficheiro!\n";
-    	return "";
-   	}
-
-   return filePath.string();
+    ifstream file(filePath);
+    if (!file)
+    {
+        cerr << "Erro ao abrir o ficheiro: " << filePath << "\n";
+        return "";
+    }
+    return filePath.string();
 }
 
 int main(int argc, char **argv)
 {
-	string line, test_number;
+    glutInit(&argc, argv);
 
-	glutInit(&argc, argv);
-	
-	fs::path currentPath = "../test files";
+    fs::path currentPath = "../test files";
     vector<fs::directory_entry> items;
     int choice;
-	string fileContent = "../test files/test_files_phase_2/test_2_5";
+    string fileContent = "";
 
-	while (true)
-	{
-		listDirectory(currentPath, items);
-       
-		cout << "\nEscolhe um número (0 para sair): ";
-		cin >> choice;
+    while (true)
+    {
+        cout << "\nConteúdo de: " << currentPath.string() << "\n";
+        listDirectory(currentPath, items);
 
-       if (choice == 0)
-		{
-			break;
-		}
-       if (choice < 1 || choice > items.size())
-		{
-           cout << "Escolha inválida!\n";
-           continue;
-       }
-       
-       fs::directory_entry selected = items[choice - 1];
+        cout << "\nEscolhe um número (0 para sair): ";
+        cin >> choice;
 
-       if (fs::is_directory(selected))
-		{
-           currentPath = selected.path(); // Entra no diretório
-       } 
-		else if (fs::is_regular_file(selected))
-		{
-           fileContent = readFile(selected.path());
-			break;
-       }
-		else
-		{
-           cout << "Item inválido!\n";
-       }
-   }
+        if (choice == 0)
+        {
+            return 0;
+        }
+        if (choice < 1 || choice > (int)items.size())
+        {
+            cout << "Escolha inválida!\n";
+            continue;
+        }
 
-	cout << fileContent;
+        fs::directory_entry selected = items[choice - 1];
 
-	renderMain(fileContent);
+        if (fs::is_directory(selected))
+        {
+            currentPath = selected.path(); // entra no diretório
+        }
+        else // só pode ser ficheiro .xml aqui
+        {
+            fileContent = readFile(selected.path());
+            break;
+        }
+    }
 
-	return 0;
+    cout << "Ficheiro XML escolhido: " << fileContent << "\n";
+    renderMain(fileContent);
+
+    return 0;
 }

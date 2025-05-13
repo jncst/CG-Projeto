@@ -74,11 +74,15 @@ else() # Linux and Mac
     link_directories(${TINYXML2_LIBRARY_DIRS})
     target_link_libraries(${PROJECT_NAME} ${TINYXML2_LIBRARIES})
 
+    find_package(DevIL REQUIRED)
+    include_directories(${IL_INCLUDE_DIR})
+    link_libraries(${IL_LIBRARIES})
+
     if (NOT APPLE)
         find_package(GLEW REQUIRED)
         include_directories(${GLEW_INCLUDE_DIRS})
         link_libraries(${GLEW_LIBRARIES})
-        target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} ${GLEW_LIBRARIES} IL)
     else()
         target_link_libraries(${PROJECT_NAME} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
     endif()
