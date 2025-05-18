@@ -53,6 +53,14 @@ float camZ;
 // TESTING STUFF
 int valor = 100; // valor para limitar numero de triangulos em funcoes para ajudar a vizualizar a contruçao do objeto
 
+struct ModelVBO {
+    GLuint vertices;
+    GLuint normals;
+    GLuint texCoords;
+    int numVertices;
+};
+
+static std::map<std::string, ModelVBO> modelCache;
 
 // VBO STUFF
 vector <float> triangles;
@@ -186,6 +194,15 @@ void loadTexturePoints (string line)
 
 void loadObject (string model)
 {
+	auto it = modelCache.find(model);
+
+	if (it != modelCache.end()) {
+        vbo = it->second.vertices;
+        vbo_normals = it->second.normals;
+        vbo_uv = it->second.texCoords;
+        return;  // Não precisamos carregar novamente
+    }
+
 	ifstream file("../generatorResults/" + model);
 
 	string line = "";
@@ -198,79 +215,73 @@ void loadObject (string model)
 		loadTexturePoints (line);
 	}
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * triangles.size(), triangles.data(), GL_STATIC_DRAW);
+	GLuint vertexVBO, normalVBO, texVBO;
+    glGenBuffers(1, &vertexVBO);
+    glGenBuffers(1, &normalVBO);
+    glGenBuffers(1, &texVBO);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size(), normals.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * triangles.size(), triangles.data(), GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, normalVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * normals.size(), normals.data(), GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, texVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * texturePoints.size(), texturePoints.data(), GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * texturePoints.size(), texturePoints.data(), GL_STATIC_DRAW);
+	ModelVBO modelVBO;
+    modelVBO.vertices = vertexVBO;
+    modelVBO.normals = normalVBO;
+    modelVBO.texCoords = texVBO;
+    modelVBO.numVertices = triangles.size() / 3;
+    modelCache[model] = modelVBO;
 
-
-	//triangles.clear();
+	vbo = vertexVBO;
+    vbo_normals = normalVBO;
+    vbo_uv = texVBO;
 }
 
-void drawTriangles ()
+void drawTriangles(const string& modelName)
 {
-	int numVertices = triangles.size() / 3;
+    // Obter o número de vértices do cache se disponível
+    int numVertices;
+    auto it = modelCache.find(modelName);
+    if (it != modelCache.end()) {
+        numVertices = it->second.numVertices;
+    } else {
+        numVertices = triangles.size() / 3;
+    }
+    
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
+    glNormalPointer(GL_FLOAT, 0, 0);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
+    glTexCoordPointer(2, GL_FLOAT, 0, 0);
+    
+    glDrawArrays(GL_TRIANGLES, 0, numVertices);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
 
-
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexPointer(3, GL_FLOAT, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_normals);
-	glNormalPointer(GL_FLOAT, 0, 0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_uv);
-	glTexCoordPointer(2, GL_FLOAT, 0, 0);
-	
-	// GLint bufferSize;
-	// glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
-	
-
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	if (showNormals)
-	{
-		// Desenha as normais para debug
-		glDisable(GL_LIGHTING);
-		glColor3f(1.0f, 1.0f, 0.0f);
-
-		glBegin(GL_LINES);
-		int numVerts = normals.size() / 3;   // cada normal tem 3 componentes
-		for (int i = 0; i < numVerts; ++i)
-		{
-			// Posição do vértice
-			float vx = triangles[3 * i + 0];
-			float vy = triangles[3 * i + 1];
-			float vz = triangles[3 * i + 2];
-
-			// Normal correspondente
-			float nx = normals[3 * i + 0];
-			float ny = normals[3 * i + 1];
-			float nz = normals[3 * i + 2];
-
-			// Linha da normal: de v a v + n*scale
-			glVertex3f(vx, vy, vz);
-			glVertex3f(vx + nx * 0.2f,
-						vy + ny * 0.2f,
-						vz + nz * 0.2f);
-		}
-		glEnd();
-
-		glEnable(GL_LIGHTING);
-	}
-
-	triangles.clear();
-	normals.clear();
-	texturePoints.clear();
+void cleanupModelCache()
+{
+    for (auto& pair : modelCache) {
+        ModelVBO& vbo = pair.second;
+        glDeleteBuffers(1, &vbo.vertices);
+        glDeleteBuffers(1, &vbo.normals);
+        glDeleteBuffers(1, &vbo.texCoords);
+    }
+    modelCache.clear();
 }
 
 void buildRotMatrix(float *x, float *y, float *z, float *m) {
@@ -617,10 +628,8 @@ void renderGroup(const Group& group, float elapsed_time)
 			glBindTexture(GL_TEXTURE_2D, it->second);
 		}	
         loadObject(model.file);
-        drawTriangles();
-		
-		// glDisable(GL_TEXTURE_2D);
-		
+		drawTriangles(model.file);
+        // drawTriangles();
         glPopMatrix();
     }
 
