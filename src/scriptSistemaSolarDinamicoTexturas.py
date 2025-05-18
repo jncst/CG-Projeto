@@ -26,7 +26,7 @@ venusTexture = "venusmap.jpg"
 terraDistancia = 92900
 terraDiametro = 7.926
 terraAngulo = 45
-terraTexture = "earthmap.jpg"
+terraTexture = "earth.jpg"
 
 # Lua
 luaDistancia = 1200000
@@ -167,7 +167,7 @@ def criaPlaneta (nome, distancia, diametro, angulo, texture, grupo):
     model = criaElemento("model", {"file": f"planet.3d"}, models)
     criaElemento("texture", {"file": texture}, model)
 
-    if nome == "Saturno" or nome == "Urano":
+    if nome == "Saturno" :
         subgrupo = criaElemento("group", pai=grupo)
         transform = criaElemento("transform", pai=subgrupo)
         angulo = 20
@@ -176,7 +176,22 @@ def criaPlaneta (nome, distancia, diametro, angulo, texture, grupo):
         criaElemento("scale", {"x": 1, "y": alturaDonut, "z": 1}, transform)
 
         models = criaElemento("models", pai=subgrupo)
-        criaElemento("model", {"file": f"anelsaturno.3d"}, models)
+        model = criaElemento("model", {"file": f"anelsaturno.3d"}, models)
+        criaElemento("texture", {"file": "saturnringcolor.jpg"}, model)
+
+    if nome == "Urano":
+        subgrupo = criaElemento("group", pai=grupo)
+        transform = criaElemento("transform", pai=subgrupo)
+        angulo = 20
+        alturaDonut = 0.1
+        criaElemento("rotate", {"angle": angulo, "x": eixoRodarAsteroidesX, "y": eixoRodarAsteroidesY, "z": eixoRodarAsteroidesZ}, transform)
+        criaElemento("scale", {"x": 1, "y": alturaDonut, "z": 1}, transform)
+
+        models = criaElemento("models", pai=subgrupo)
+        model = criaElemento("model", {"file": f"anelsaturno.3d"}, models)
+        criaElemento("texture", {"file": "uranusringcolour.jpg"}, model)
+        
+
 
     if nome == "Terra":
         subgrupo = criaElemento("group", pai=grupo)             # lua
