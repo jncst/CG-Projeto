@@ -239,6 +239,10 @@ void loadObject (string model)
 	vbo = vertexVBO;
     vbo_normals = normalVBO;
     vbo_uv = texVBO;
+
+	triangles.clear();
+	normals.clear();
+	texturePoints.clear();
 }
 
 void drawTriangles(const string& modelName)
@@ -607,7 +611,7 @@ void renderGroup(const Group& group, float elapsed_time)
 		glMaterialfv(GL_FRONT, GL_DIFFUSE,   model.material.diffuse);  
 		glMaterialfv(GL_FRONT, GL_AMBIENT,   model.material.ambient);  
 		glMaterialfv(GL_FRONT, GL_SPECULAR,  model.material.specular);  
-		glMaterialfv(GL_FRONT, GL_EMISSION,  model.material.emissive);  
+		glMaterialfv(GL_FRONT, GL_EMISSION,  model.material.emissive);
 
 		glMaterialf (GL_FRONT, GL_SHININESS, model.material.shininess);  
 
@@ -917,5 +921,6 @@ int main(int argc, char **argv)
     cout << "Ficheiro XML escolhido: " << fileContent << "\n";
     renderMain(fileContent);
 
+	cleanupModelCache();
     return 0;
 }

@@ -205,7 +205,7 @@ def geradorXml():
     world = criaElemento("world")
 
     # Cria o elemento window
-    window = criaElemento("window", {"width": 512, "height": 512}, world)
+    criaElemento("window", {"width": 512, "height": 512}, world)
 
     # Cria o elemento camera
     camera = criaElemento("camera", pai = world)
@@ -229,7 +229,7 @@ def geradorXml():
     model = criaElemento("model", {"file": f"planet.3d"}, models)
     criaElemento("texture", {"file": solTexture}, model);
     color = criaElemento("color", pai = model)
-    criaElemento ("emissive", {"R": 255, "G": 255, "B": 255})
+    criaElemento ("emissive", {"R": 255, "G": 255, "B": 255}, color)
 
     
 
@@ -256,10 +256,11 @@ def geradorXml():
         criaElemento("scale", {"x": diametro * escalaAsteroides, "y": diametro * escalaAsteroides, "z": diametro * escalaAsteroides}, transform)
 
         models = criaElemento("models", pai = grupo)
-        criaElemento("model", {"file": f"asteroide.3d"}, models)
+        model = criaElemento("model", {"file": f"asteroide.3d"}, models)
+        criaElemento("texture", {"file": "asteroid.jpg"}, model);
         i += 1
 
-    # Cintura de Asteroides
+    # Cintura de Asteroides 2
     grupoAsteroides = criaElemento("group", pai = world)
     i = 0
     while (i < cinturaAsteroidesNumAsteroides):
@@ -277,7 +278,8 @@ def geradorXml():
         criaElemento("scale", {"x": diametro * escalaAsteroides, "y": diametro * escalaAsteroides, "z": diametro * escalaAsteroides}, transform)
 
         models = criaElemento("models", pai = grupo)
-        criaElemento("model", {"file": f"asteroide.3d"}, models)
+        model = criaElemento("model", {"file": f"asteroide.3d"}, models)
+        criaElemento("texture", {"file": "asteroid.jpg"}, model);
         i += 1
 
     # Cometa
@@ -292,10 +294,12 @@ def geradorXml():
     criaElemento("point", {"x": "1000", "y": "0", "z": "-500"}, translate)
 
     criaElemento("rotate", {"angle": "-75", "x": "1", "y": "0", "z": "0"}, transform)
-    criaElemento("scale", {"x": "3.0", "y": "3.0", "z": "3.0"}, transform)
+    criaElemento("scale", {"x": "4.0", "y": "4.0", "z": "4.0"}, transform)
 
     models = criaElemento("models", pai=grupoCometa)
-    criaElemento("model", {"file": "bezier_10.3d"}, models)
+    model = criaElemento("model", {"file": "bezier_10.3d"}, models)
+    criaElemento("texture", {"file": "teapot.jpg"}, model);
+
 
 
     return world
